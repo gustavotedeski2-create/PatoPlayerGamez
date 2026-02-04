@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Car - Urban Runner</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; background: #555; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; text-shadow: 2px 2px 4px #000; pointer-events: none; }
+        .msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <h1>Grand Car</h1>
+    <p>Pontos: <span id="score">0</span></p>
+    <p>Veículo: <span id="carType">A pé</span></p>
+    <p><small>Use as SETAS para mover | ESPAÇO para roubar carro próximo</small></p>
+</div>
+
+<div id="gameOver" class="msg">
+    <h2>VOCÊ FOI ATROPELADO!</h2>
+    <p>Pontuação Final: <span id="finalScore">0</span></p>
+    <button onclick="location.reload()">RECOMEÇAR</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const carTypeEl = document.getElementById('carType');
+const gameOverEl = document.getElementById('gameOver');
+
+canvas.width = 400;
+canvas.height = window.innerHeight;
+
+// Configurações e Estado
+let score = 0;
+let gameActive = true;
+let speed = 5;
+const player = {
+    x: 200,
+    y: canvas.height - 150,
+    w: 30,
+    h: 50,
+    color: '#3498db',
+    inVehicle: false,
+    currentVehicle: null
+};
+
+const vehicles = [];
+const vehicleTypes = [
+    { name: 'Sedan', color: '#e74c3c', w: 40, h: 70, speedMult: 1 },
+    { name: 'Caminhão', color: '#f1c40f', w: 50, h: 110, speedMult: 0.7 },
+    { name: 'Esportivo', color: '#2ecc71', w: 40, h: 65, speedMult: 1.5 },
+    { name: 'Moto', color: '#9b59b6', w: 20, h: 40, speedMult: 1.8 }
+];
+
+// Controles
+const keys = {};
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+function spawnVehicle() {
+    const type = vehicleTypes[Math.floor(Math.random() * vehicleTypes.length)];
+    const lane = Math.floor(Math.random() * 3); // 3 faixas
+    vehicles.push({
+        ...type,
+        x: 50 + (lane * 120),
+        y: -150,
+    });
+}
+
+function checkCollision(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function update() {
+    if (!gameActive) return;
+
+    // Movimentação lateral
+    if (keys['ArrowLeft'] && player.x > 0) player.x -= 5;
+    if (keys['ArrowRight'] && player.x < canvas.width - player.w) player.x += 5;
+
+    // Lógica de roubo (Espaço)
+    if (keys['Space']) {
+        vehicles.forEach((v, index) => {
+            // Se estiver perto o suficiente de um veículo
+            let dist = Math.hypot(player.x - v.x, player.y - v.y);
+            if (dist < 80) {
+                player.inVehicle = true;
+                player.currentVehicle = v;
+                player.color = v.color;
+                player.w = v.w;
+                player.h = v.h;
+                carTypeEl.innerText = v.name;
+                vehicles.splice(index, 1); // Remove o carro da pista pois agora o player o pilota
+                score += 100;
+            }
+        });
+    }
+
+    // Movimentação do cenário/carros
+    if (Math.random() < 0.02) spawnVehicle();
+
+    vehicles.forEach((v, index) => {
+        v.y += speed;
+        
+        // Colisão: Se o player estiver a pé e bater = Game Over
+        if (!player.inVehicle && checkCollision(player, v)) {
+            gameActive = false;
+            gameOverEl.style.display = 'block';
+            document.getElementById('finalScore').innerText = score;
+        }
+
+        // Remover carros que saíram da tela
+        if (v.y > canvas.height) {
+            vehicles.splice(index, 1);
+            score += 10;
+        }
+    });
+
+    // Se estiver no veículo, a velocidade aumenta ligeiramente
+    if (player.inVehicle) {
+        speed = 5 * player.currentVehicle.speedMult;
+        // O carro do player vibra levemente para dar sensação de movimento
+        player.x += (Math.random() - 0.5) * 1; 
+    }
+
+    scoreEl.innerText = score;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha Estrada
+    ctx.fillStyle = '#444';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Faixas
+    ctx.strokeStyle = '#fff';
+    ctx.setLineDash([20, 20]);
+    ctx.beginPath();
+    ctx.moveTo(133, 0); ctx.lineTo(133, canvas.height);
+    ctx.moveTo(266, 0); ctx.lineTo(266, canvas.height);
+    ctx.stroke();
+
+    // Desenha Veículos NPC
+    vehicles.forEach(v => {
+        ctx.fillStyle = v.color;
+        ctx.fillRect(v.x, v.y, v.w, v.h);
+        // Detalhes simples (pára-brisa)
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(v.x + 5, v.y + 10, v.w - 10, 15);
+    });
+
+    // Desenha Jogador
+    ctx.fillStyle = player.color;
+    ctx.shadowBlur = player.inVehicle ? 15 : 0;
+    ctx.shadowColor = player.color;
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(() => {
+        update();
+        draw();
+    });
+}
+
+draw();
+</script>
+</body>
+</html>

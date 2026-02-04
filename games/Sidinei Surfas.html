@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidinei Surfas - O Jogo</title>
+    <style>
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; overflow: hidden; }
+        canvas { background: #444; border: 4px solid #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 20px; color: white; text-align: center; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1>SIDINEI SURFAS</h1>
+        <p>Pontos: <span id="score">0</span></p>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+
+        // Configurações do Jogo
+        canvas.width = 400;
+        canvas.height = 600;
+
+        const lanes = [80, 200, 320]; // Posições X das 3 faixas
+        let currentLane = 1; // Começa no meio
+        let score = 0;
+        let gameActive = true;
+        let speed = 5;
+
+        // Jogador (Sidinei)
+        const sidinei = {
+            x: lanes[currentLane],
+            y: 500,
+            width: 40,
+            height: 60,
+            color: "#00FF00" // Verde "Sidinei"
+        };
+
+        // Obstáculos
+        const obstacles = [];
+        function createObstacle() {
+            const laneIndex = Math.floor(Math.random() * 3);
+            obstacles.push({
+                x: lanes[laneIndex] - 25,
+                y: -50,
+                width: 50,
+                height: 50,
+                color: "#FF4500"
+            });
+        }
+
+        // Controles
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft" && currentLane > 0) currentLane--;
+            if (e.key === "ArrowRight" && currentLane < 2) currentLane++;
+            if (!gameActive) location.reload(); // Reinicia ao morrer
+        });
+
+        function update() {
+            if (!gameActive) return;
+
+            sidinei.x = lanes[currentLane] - sidinei.width / 2;
+
+            // Mover obstáculos
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += speed;
+
+                // Colisão
+                if (
+                    sidinei.x < obstacles[i].x + obstacles[i].width &&
+                    sidinei.x + sidinei.width > obstacles[i].x &&
+                    sidinei.y < obstacles[i].y + obstacles[i].height &&
+                    sidinei.y + sidinei.height > obstacles[i].y
+                ) {
+                    gameActive = false;
+                    alert("Sidinei rodou! Pontuação: " + score);
+                }
+
+                // Remove obstáculos que saíram da tela
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    scoreElement.innerText = score;
+                    if (score % 10 === 0) speed += 0.2; // Aumenta dificuldade
+                }
+            }
+        }
+
+        function draw() {
+            // Fundo da Estrada
+            ctx.fillStyle = "#333";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Faixas
+            ctx.strokeStyle = "#555";
+            ctx.setLineDash([20, 20]);
+            ctx.beginPath();
+            ctx.moveTo(140, 0); ctx.lineTo(140, 600);
+            ctx.moveTo(260, 0); ctx.lineTo(260, 600);
+            ctx.stroke();
+
+            // Sidinei (Desenho simples)
+            ctx.fillStyle = sidinei.color;
+            ctx.fillRect(sidinei.x, sidinei.y, sidinei.width, sidinei.height);
+            // "Boné" do Sidinei
+            ctx.fillStyle = "blue";
+            ctx.fillRect(sidinei.x, sidinei.y, sidinei.width, 15);
+
+            // Obstáculos
+            obstacles.forEach(obs => {
+                ctx.fillStyle = obs.color;
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                // Detalhe do obstáculo
+                ctx.strokeStyle = "white";
+                ctx.strokeRect(obs.x + 5, obs.y + 5, obs.width - 10, obs.height - 10);
+            });
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Gerar obstáculos periodicamente
+        setInterval(() => {
+            if (gameActive) createObstacle();
+        }, 1200);
+
+        loop();
+    </script>
+</body>
+</html>

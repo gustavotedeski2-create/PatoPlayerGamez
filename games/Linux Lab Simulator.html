@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Linux Lab Tycoon: Save Edition</title>
+    <style>
+        :root {
+            --wood: #3e2723; --term-green: #33ff33; --gold: #ffd700; --ui-blue: #2980b9; --danger: #e74c3c;
+            --l-taskbar: rgba(10, 10, 10, 0.85); --l-window-bg: #2d2d30;
+        }
+        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; user-select: none; }
+        
+        /* HUD */
+        .hud { background: #222; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 3px solid var(--gold); font-weight: bold; font-size: 0.9em; z-index: 100; position: relative; }
+        .rep-badge { color: var(--term-green); }
+        .rep-god { color: #d35400; text-shadow: 0 0 5px orange; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .workspace { display: flex; justify-content: space-between; height: 90vh; padding: 15px; border-bottom: 60px solid var(--wood); box-sizing: border-box; position: relative; }
+
+        .left-panel { width: 260px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .clipboard-list { flex: 1; background: #d7ccc8; border: 5px solid #4e342e; padding: 10px; color: #333; overflow-y: auto; position: relative; }
+        
+        .case-card { background: rgba(255,255,255,0.9); margin-bottom: 8px; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; border-left: 5px solid #777; transition: 0.2s; position: relative; }
+        .case-card:hover { transform: translateX(5px); }
+        .case-card.active { border-left-color: #2196f3; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .case-card.done { background: #c8e6c9; opacity: 0.6; border-left-color: #4caf50; cursor: default; }
+        
+        .free-mode-card { background: #eceff1; border-left: 5px solid #607d8b; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .free-mode-card.active { border-left-color: #000; background: #fff; transform: scale(1.02); }
+
+        .client-tag { font-size: 0.7em; padding: 2px 4px; border-radius: 3px; color: white; float: right; font-weight: bold; }
+        .tag-gamer { background: #9b59b6; } .tag-empresa { background: #34495e; } .tag-idoso { background: #f1c40f; color: black; } .tag-dev { background: #e74c3c; }
+
+        .monitor-area { flex-grow: 1; margin: 0 15px; display: flex; flex-direction: column; position: relative; z-index: 5; }
+        .monitor { flex-grow: 1; background: #050505; border: 12px solid #111; border-radius: 10px; position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .monitor::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 999; background-size: 100% 2px, 3px 100%; pointer-events: none; }
+        
+        .screen-view { display: none; height: 100%; width: 100%; flex-direction: column; overflow-y: auto; position: relative; z-index: 10; }
+        .screen-view.active { display: flex; }
+
+        #screen-terminal { flex: 1; background: #050505; padding: 15px; font-family: 'Consolas', monospace; color: var(--term-green); text-shadow: 0 0 5px var(--term-green); }
+        
+        .right-sidebar { width: 320px; position: relative; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; overflow: hidden; }
+        .manual-book { position: absolute; top: 0; right: 0; width: 280px; height: 45%; background: #fdfbf7; color: #333; padding: 20px; border-left: 8px solid #b71c1c; transform: translateX(120%); transition: 0.6s; pointer-events: auto; z-index: 2000; }
+        .manual-book.show { transform: translateX(0); }
+        .clipboard-board { position: absolute; bottom: 0; right: 10px; width: 300px; height: 45%; background: linear-gradient(#a16e4b, #5d4037); border-radius: 10px 10px 0 0; transform: translateY(120%); transition: 0.7s; pointer-events: auto; z-index: 2000; padding-top: 40px; display:flex; justify-content:center; }
+        .clipboard-board.show { transform: translateY(0); }
+        .paper-sheet { width: 85%; height: 85%; background: #fff; padding: 15px; font-family: 'Courier New', monospace; color: #222; overflow-y: auto; transform: rotate(-1deg); }
+
+        /* LINUXUS OS */
+        #view-virtualpc { background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070'); background-size: cover; background-position: center; position: relative; overflow: hidden; }
+        #vpc-desktop { width: 100%; height: calc(100% - 40px); position: relative; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; padding: 10px; gap: 10px; }
+        .vpc-icon { width: 70px; text-align: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px black; border-radius: 5px; padding: 5px; }
+        .vpc-icon:hover { background: rgba(255,255,255,0.2); }
+        .vpc-icon img { width: 40px; height: 40px; display: block; margin: 0 auto 5px; }
+        #vpc-taskbar { height: 40px; background: var(--l-taskbar); width: 100%; position: absolute; bottom: 0; left: 0; display: flex; align-items: center; padding: 0 10px; backdrop-filter: blur(5px); z-index: 500; }
+        .vpc-window { position: absolute; width: 500px; height: 350px; background: var(--l-window-bg); border-radius: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; color: #eee; border: 1px solid #444; }
+        .vpc-win-header { background: #222; color: white; padding: 5px 10px; display: flex; justify-content: space-between; cursor: move; font-size: 0.9em; border-bottom: 1px solid #444; }
+        
+        /* OBS */
+        .obs-container { display: flex; flex: 1; flex-direction: column; font-family: sans-serif; }
+        .obs-preview { flex: 2; background: #000; margin: 10px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 2em; border: 1px solid #444; position: relative; }
+        .obs-live-badge { position: absolute; top: 10px; left: 10px; background: red; color: white; padding: 2px 5px; font-size: 12px; font-weight: bold; display: none; }
+        .obs-theme-label { position: absolute; bottom: 10px; left: 10px; background: #2980b9; color: white; padding: 2px 5px; font-size: 10px; font-weight: bold; display: none; }
+        .obs-stats-bar { background: #1e1e1e; padding: 5px 10px; display: flex; gap: 15px; font-size: 12px; border-top: 1px solid #444; }
+        .obs-controls { display: flex; flex-direction: column; gap: 5px; padding: 10px; background: #252526; width: 120px; }
+        .obs-btn-start { background: #2c3e50; color: white; border: none; padding: 8px; cursor: pointer; width: 100%; font-size: 11px; }
+        .obs-btn-active { background: #c0392b; }
+        .obs-select { background: #111; color: white; border: 1px solid #444; padding: 5px; width: 100%; font-size: 11px; }
+        .obs-chat { flex: 1; background: #111; margin: 0 10px 10px 10px; border: 1px solid #444; padding: 5px; overflow-y: auto; font-size: 11px; }
+        .chat-msg { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        .reply-btn { background: #2980b9; border: none; color: white; cursor: pointer; font-size: 9px; margin-left: 5px; padding: 2px 5px; border-radius: 2px; }
+        
+        /* Util */
+        .btn { cursor: pointer; border: none; border-radius: 3px; font-weight: bold; color: white; padding: 10px; margin-bottom: 5px; }
+        .hidden { display: none !important; }
+        .inventory { background: #2c3e50; padding: 10px; border-radius: 4px; font-size: 0.8em; margin-top: 10px; }
+        .usb-stick { background: #e67e22; padding: 8px; text-align: center; cursor: grab; margin-top: 5px; border-radius: 3px; font-weight: bold; }
+        .drop-zone { position: absolute; width:100%; height:100%; background: rgba(52, 152, 219, 0.5); display:none; align-items:center; justify-content:center; z-index:1000; font-size:2em; border: 5px dashed white; }
+        .code-block { background: #222; color: #33ff33; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.9em; word-break: break-all; margin-top: 5px; }
+        .pc-case { width: 300px; height: 400px; background: #222; margin: 20px auto; border: 4px solid #555; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .component { height: 60px; border: 2px dashed #444; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
+        .broken { background: #442222; border-color: var(--danger); color: var(--danger); }
+        .fixed { background: #1b5e20; border-color: var(--term-green); color: #fff; }
+        
+        /* SAVE NOTIFICATION */
+        #save-notify { position:absolute; top:70px; right:10px; background:#27ae60; color:white; padding:10px 20px; border-radius:5px; opacity:0; transition:0.5s; z-index:9000; font-weight:bold; box-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none;}
+    </style>
+</head>
+<body>
+
+<div class="hud">
+    <span>🖥️ <span id="valPC">Básico</span></span>
+    <span>⭐ REP: <span id="valRep" class="rep-badge">50%</span></span>
+    <span>💰 $<span id="valMoney">0</span></span>
+    <span>📅 DIA: <span id="valDay">1</span></span>
+    <span onclick="saveGame()" style="cursor:pointer; background:#333; padding:2px 8px; border-radius:4px; font-size:0.8em;" title="Clique para salvar manualmente">💾 SALVAR</span>
+</div>
+
+<div id="save-notify">✅ JOGO SALVO!</div>
+
+<div class="workspace">
+    <div class="left-panel">
+        <button onclick="showTab('management')" class="btn" style="background:#8e44ad; width:100%">🏢 GESTÃO / RH</button>
+        <div class="clipboard-list">
+            <h4 style="margin:0 0 10px 0; text-align:center;">ORDENS DE SERVIÇO</h4>
+            <div id="btnFreeMode" class="case-card free-mode-card" onclick="enterFreeMode()">
+                <span class="client-tag" style="background:#455a64">SYSTEM</span>
+                <strong>🖥️ MODO LIVRE</strong><br>
+                <small>Acesso Total ao Terminal</small>
+            </div>
+            <hr style="border-color:#5d4037; opacity:0.3; margin-bottom:10px;">
+            <div id="caseList"></div>
+            <button id="btnNextDay" onclick="nextDay()" class="btn" style="width:100%; background: #27ae60; display:none; margin-top:10px;">PRÓXIMO DIA</button>
+        </div>
+        <div class="inventory">
+            <strong>MOCHILA</strong>
+            <div id="usb" class="usb-stick" draggable="true" style="display:none;">PENDRIVE ISO</div>
+            <div id="inv-parts" style="color:var(--gold); margin-top:5px;">Vazio</div>
+            <button id="btnBurnIso" class="btn" onclick="burnIso()" style="background:#d35400; width:100%; margin-top:5px; display:none; font-size:10px;">GRAVAR ISO</button>
+        </div>
+        <button id="btnBuyTools" class="btn" onclick="buyTools()" style="background:var(--gold); color:#000; width:100%">KIT FERRAMENTAS ($200)</button>
+        <button id="btnUpgradePC" class="btn hidden" onclick="upgradeShop('workstation')" style="background:#2980b9; width:100%">UPGRADE BANCADA ($500)</button>
+    </div>
+
+    <div class="monitor-area">
+        <div style="display:flex; gap:5px; margin-bottom:5px;">
+            <button class="btn" onclick="showTab('terminal')" style="background:#111;">Terminal</button>
+            <button id="tabShop" class="btn hidden" onclick="showTab('shop')" style="background:#111;">Loja</button>
+            <button id="tabHardware" class="btn hidden" onclick="showTab('hardware')" style="background:#111;">Hardware</button>
+            <button id="tabVirtualPC" class="btn hidden" onclick="showTab('virtualpc')" style="background:#f1c40f; color:#000;">🦆 Virtual PC</button>
+        </div>
+
+        <div class="monitor">
+            <div id="dropZone" class="drop-zone">SOLTE PARA FORMATAR</div>
+            <div id="view-terminal" class="screen-view active">
+                <div id="screen-terminal">
+                    <div id="output">Linux Lab OS v2.1 (Save Enabled)<br>Selecione um cliente ou 'Modo Livre'.<br></div>
+                    <div id="inputLine" class="hidden" style="display:flex; margin-top:10px;">
+                        <span id="userPrefix">root@client:~#&nbsp;</span>
+                        <input type="text" id="termInput" style="background:transparent; border:none; color:var(--term-green); outline:none; flex:1; font-family:monospace; font-size:16px; text-shadow: 0 0 5px var(--term-green);" autofocus>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-virtualpc" class="screen-view"><div id="vpc-desktop"><div class="vpc-icon" ondblclick="vpcOpen('Terminal')"><img src="https://cdn-icons-png.flaticon.com/512/1144/1144760.png">Terminal</div><div class="vpc-icon" ondblclick="vpcOpen('Browser')"><img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png">Internet</div><div id="obs-icon" class="vpc-icon hidden" ondblclick="vpcOpen('OBS')"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d3/Obs_studio_icon_2024.png">OBS</div></div><div id="vpc-taskbar"><button style="background:none;border:none;font-size:24px;">🦆</button><div id="vpc-clock" style="margin-left:auto;color:white;font-size:12px;"></div></div></div>
+            <div id="view-hardware" class="screen-view"><div class="pc-case"><div id="comp-Fonte" class="component" onclick="interactHardware('Fonte')">FONTE</div><div id="comp-SSD" class="component" onclick="interactHardware('SSD')">SSD</div><div id="comp-RAM" class="component" onclick="interactHardware('RAM')">RAM</div></div></div>
+            <div id="view-shop" class="screen-view"><h3>Amazin Parts</h3><div style="background:white;padding:10px;margin-bottom:5px;display:flex;justify-content:space-between;color:#333"><span>Fonte ATX ($150)</span> <button class="btn" style="background:green" onclick="buyPart('Fonte',150)">Comprar</button></div><div style="background:white;padding:10px;margin-bottom:5px;display:flex;justify-content:space-between;color:#333"><span>SSD ($120)</span> <button class="btn" style="background:green" onclick="buyPart('SSD',120)">Comprar</button></div><div style="background:white;padding:10px;display:flex;justify-content:space-between;color:#333"><span>RAM ($80)</span> <button class="btn" style="background:green" onclick="buyPart('RAM',80)">Comprar</button></div></div>
+            <div id="view-management" class="screen-view" style="background:#2c3e50;padding:20px;align-items:center;"><h2>🏢 Escritório</h2><div style="background:rgba(0,0,0,0.3);padding:20px;border-radius:10px;width:80%;text-align:center;"><p>Equipe: <strong id="valEmps">0</strong></p><button class="btn" onclick="hireEmp()" style="background:#2980b9">CONTRATAR ($1000)</button></div><button id="btnSkipMonth" class="btn" onclick="skipMonth()" style="margin-top:20px;width:80%;height:60px;">📅 PULAR MÊS</button></div>
+        </div>
+    </div>
+
+    <div class="right-sidebar">
+        <div id="manual-panel" class="manual-book"><div class="manual-header"><div class="manual-title">📘 MANUAL TÉCNICO</div></div><div style="font-size:0.85em; color:#555;">Solução:</div><div id="manual-content"></div></div>
+        <div id="clipboard-panel" class="clipboard-board"><div class="clip-metal"><div class="clip-hole"></div></div><div class="paper-sheet"><div style="border-bottom:2px solid #333; margin-bottom:10px; font-weight:bold;">ORDEM DE SERVIÇO</div><div id="demand-content"></div></div></div>
+    </div>
+</div>
+
+<script>
+    const clientTypes={'Gamer':{pay:1.5},'Idoso':{pay:1.0},'Empresa':{pay:2.0},'Dev':{pay:1.2},'Padrão':{pay:1.0}};
+    const techProblems=[{id:'kernel',name:'Kernel Panic',diag:{dmesg:"Kernel panic",lsblk:"Normal"},fixCmd:"sudo update-initramfs -u",fixMsg:"Boot recuperado.",symptom:"Tela preta piscando."},{id:'disk',name:'Disco Cheio',diag:{lsblk:"sda1: 99% USE"},fixCmd:"sudo apt autoremove",fixMsg:"Limpeza feita.",symptom:"Não salva nada."},{id:'driver',name:'Driver Video',diag:{neofetch:"GPU: Unknown"},fixCmd:"sudo apt install nvidia-driver",fixMsg:"GPU OK.",symptom:"Jogos lentos."}];
+    const simpleTasks=[{d:"Ver IP",cmd:"ip addr",r:"192.168.0.1"},{d:"Listar",cmd:"ls -la",r:"files..."}];
+
+    // ESTADO DO JOGO (Será salvo no localStorage)
+    let stats={money:100,day:1,reputation:50,employees:0,hasTools:false,inventory:[],usbReady:false,virtualPcUnlocked:false,obsInstalled:false,steamInstalledInVM:false,totalFollows:0,totalLikes:0,streamHistory:[]};
+    
+    let devAuthState={waiting:false,timer:null};
+    let activeCase=null, missions=[], vpcZIndex=100;
+
+    // --- SAVE / LOAD SYSTEM ---
+    function saveGame() {
+        localStorage.setItem('linuxLabSave_v1', JSON.stringify(stats));
+        const notif = document.getElementById('save-notify');
+        notif.style.opacity = '1';
+        notif.style.top = '80px';
+        setTimeout(() => { notif.style.opacity = '0'; notif.style.top = '70px'; }, 2000);
+    }
+    
+    function loadGame() {
+        const data = localStorage.getItem('linuxLabSave_v1');
+        if(data) {
+            try {
+                const savedStats = JSON.parse(data);
+                stats = {...stats, ...savedStats}; // Mescla stats padrão com salvos para evitar erros em updates futuros
+                
+                // Restaura estado da interface
+                if(stats.hasTools) {
+                    document.getElementById('btnBuyTools').style.display='none';
+                    document.getElementById('tabShop').classList.remove('hidden');
+                    document.getElementById('tabHardware').classList.remove('hidden');
+                    document.getElementById('btnUpgradePC').classList.remove('hidden');
+                }
+                if(stats.virtualPcUnlocked) document.getElementById('tabVirtualPC').classList.remove('hidden');
+                if(stats.obsInstalled) document.getElementById('obs-icon').classList.remove('hidden');
+                
+                updateUI();
+                print(">> JOGO CARREGADO COM SUCESSO!", "lime");
+            } catch(e) {
+                console.error("Save corrompido", e);
+            }
+        }
+    }
+
+    // --- GAME LOGIC ---
+    function enterFreeMode(){if(activeCase&&activeCase.type!=='free'&&!activeCase.done)return alert("Termine a missão atual!"); activeCase={type:'free',clientName:'Admin',reward:0}; showTab('terminal'); document.getElementById('inputLine').classList.remove('hidden'); document.getElementById('userPrefix').innerText="root@server:~# "; document.querySelectorAll('.case-card').forEach(c=>c.classList.remove('active')); document.getElementById('btnFreeMode').classList.add('active'); renderRightPanel(); print(">> MODO LIVRE ATIVADO.","cyan"); document.getElementById('termInput').focus();}
+    
+    let streamState={active:false,theme:'chat',time:0,viewers:0,sessionMoney:0,sessionFollows:0,pendingMoney:0,donationTimer:0,commentTimer:0};
+    let streamInterval=null;
+    
+    function toggleStream(){
+        if(streamState.active){
+            clearInterval(streamInterval);streamState.active=false;
+            if(streamState.pendingMoney>0){stats.money+=streamState.pendingMoney;alert(`LIVE OFF! +$${streamState.pendingMoney}`);}
+            stats.streamHistory.unshift({date:`Dia ${stats.day}`,views:streamState.viewers,earned:streamState.sessionMoney+streamState.pendingMoney});
+            stats.totalFollows+=streamState.sessionFollows;
+            document.getElementById('obs-live-badge').style.display='none';document.getElementById('obs-theme-label').style.display='none';document.getElementById('btn-stream-toggle').innerText="INICIAR";document.getElementById('btn-stream-toggle').classList.remove('obs-btn-active');
+            addChatMsg("🔴 LIVE OFF","red");
+            saveGame(); // Salva ao fim da live
+            updateUI();
+        } else {
+            const theme=document.getElementById('obs-theme-select').value;
+            if(theme==='game'&&!stats.steamInstalledInVM){alert("Instale a Steam na VM!");return;}
+            streamState={active:true,theme:theme,time:0,viewers:1,sessionMoney:0,sessionFollows:0,pendingMoney:0,donationTimer:0,commentTimer:0};
+            document.getElementById('obs-live-badge').style.display='block';document.getElementById('obs-theme-label').innerText=theme;document.getElementById('obs-theme-label').style.display='block';document.getElementById('btn-stream-toggle').innerText="PARAR";document.getElementById('btn-stream-toggle').classList.add('obs-btn-active');document.getElementById('obs-chat-content').innerHTML="";
+            addChatMsg("🟢 LIVE ON","lime");
+            streamInterval=setInterval(streamLoop,1000);
+        }
+    }
+    
+    function streamLoop(){
+        streamState.time++;streamState.donationTimer++;streamState.commentTimer++;
+        let growth=streamState.theme==='game'?1.5:1;
+        if(streamState.time===60)streamState.viewers=Math.max(streamState.viewers,Math.floor(2*growth));
+        if(streamState.time===180)streamState.viewers=Math.max(streamState.viewers,Math.floor(5*growth));
+        if(streamState.donationTimer>=(streamState.theme==='work'?240:120)){streamState.donationTimer=0;let d=Math.floor(Math.random()*20)+5;stats.money+=d;streamState.sessionMoney+=d;addChatMsg(`💰 Fan doou $${d}!`,"cyan");updateUI();}
+        if(Math.random()>0.85){if(Math.random()>0.5)stats.totalLikes++;else{streamState.sessionFollows++;streamState.pendingMoney+=10;addChatMsg("🔔 Follow!","lime");}}
+        if(streamState.commentTimer>15&&Math.random()>0.7){streamState.commentTimer=0;if(streamState.theme!=='work')triggerComment();updateObsStats();}
+        updateObsStats();
+    }
+    
+    function triggerComment(){const u="User_"+Math.floor(Math.random()*100);const id="msg-"+Date.now();const d=document.createElement('div');d.className="chat-msg";d.id=id;d.innerHTML=`<span style="color:#aaa">${u}:</span> Oi! <button class="reply-btn" onclick="this.parentElement.innerHTML+=' <span style=color:lime>✓</span>'">R</button>`;document.getElementById('obs-chat-content').appendChild(d);}
+    function addChatMsg(t,c){const d=document.createElement('div');d.className="chat-msg";d.style.color=c;d.innerText=t;document.getElementById('obs-chat-content').appendChild(d);}
+    function updateObsStats(){document.getElementById('obs-time').innerText=streamState.time;document.getElementById('obs-viewers').innerText=streamState.viewers;document.getElementById('obs-money').innerText="$"+(streamState.sessionMoney+streamState.pendingMoney);}
+
+    function vpcOpen(app){
+        const w=document.createElement('div');w.className='vpc-window';w.style.top='30px';w.style.left='30px';w.style.zIndex=++vpcZIndex;
+        let c="";
+        if(app==='Terminal')c=`<div style="background:#000;color:#0f0;height:100%;padding:5px;font-family:monospace;display:flex;flex-direction:column;"><div id="vpc-term-out">root@linuxus:~$ _</div><input type="text" style="background:transparent;border:none;color:white;outline:none;" autofocus onkeydown="if(event.key==='Enter'){this.previousElementSibling.innerHTML+='<br>root@linuxus:~$ '+this.value;if(this.value==='sudo apt install obs studio'){this.previousElementSibling.innerHTML+='<br>Instalando OBS... OK';stats.obsInstalled=true;document.getElementById('obs-icon').classList.remove('hidden');saveGame();}else if(this.value==='sudo apt install steam'){this.previousElementSibling.innerHTML+='<br>Instalando Steam... OK';stats.steamInstalledInVM=true;saveGame();}else{this.previousElementSibling.innerHTML+='<br>Erro.';}this.value='';}"></div>`;
+        else if(app==='OBS')c=`<div class="obs-container"><div class="obs-preview"><div id="obs-live-badge" class="obs-live-badge">REC</div><div id="obs-theme-label" class="obs-theme-label"></div>TELA</div><div class="obs-stats-bar"><span>REC: <span id="obs-time">0</span></span><span>👥 <span id="obs-viewers">0</span></span><span>💰 <span id="obs-money">0</span></span></div><div style="display:flex;height:140px;"><div class="obs-controls"><select id="obs-theme-select" class="obs-select"><option value="chat">Chatting</option><option value="work">Working</option><option value="game">Gaming</option></select><button id="btn-stream-toggle" class="obs-btn-start" onclick="toggleStream()">INICIAR</button></div><div id="obs-chat-content" class="obs-chat"></div></div></div>`;
+        else if(app==='Browser')c=`<div style="display:flex;flex-direction:column;height:100%;background:#fff;color:#000;"><div class="browser-nav"><span style="cursor:pointer;" onclick="renderBrowserPage('home')">🏠</span><input id="browser-url-bar" class="browser-address" value="https://google.com" readonly></div><div class="browser-bookmarks"><div class="bookmark-item" onclick="renderBrowserPage('youtube.com')"><span style="color:red">▶</span> YouTube</div></div><div id="browser-content-area" class="browser-content"></div></div>`;
+        w.innerHTML=`<div class="vpc-win-header" onmousedown="vpcDrag(event,this.parentElement)"><span>${app}</span><div class="vpc-win-controls"><button style="background:#ff5f56" onclick="this.parentElement.parentElement.parentElement.remove()"></button></div></div><div style="flex:1;display:flex;overflow:hidden;">${c}</div>`;
+        document.getElementById('vpc-desktop').appendChild(w);
+        if(app==='Browser')setTimeout(()=>renderBrowserPage('home'),100);
+    }
+
+    function vpcDrag(e,win){win.style.zIndex=++vpcZIndex;let sx=e.clientX-win.offsetLeft,sy=e.clientY-win.offsetTop;document.onmousemove=(ev)=>{win.style.left=(ev.pageX-sx-document.querySelector('.monitor').offsetLeft)+'px';win.style.top=(ev.pageY-sy-document.querySelector('.monitor').offsetTop)+'px';};document.onmouseup=()=>document.onmousemove=null;}
+    setInterval(()=>{document.getElementById('vpc-clock').innerText=new Date().toLocaleTimeString();},1000);
+
+    function updateUI(){
+        document.getElementById('valMoney').innerText=Math.floor(stats.money);
+        document.getElementById('valDay').innerText=stats.day;
+        document.getElementById('valEmps').innerText=stats.employees;
+        document.getElementById('inv-parts').innerText=stats.inventory.length?"📦 "+stats.inventory.join(", "):"Vazio";
+        const rep=document.getElementById('valRep');
+        if(stats.reputation>=200){rep.innerText="GOD";rep.className="rep-god";}else{rep.innerText=stats.reputation+"%";rep.className=stats.reputation<30?"rep-low":"rep-badge";}
+        const sk=document.getElementById('btnSkipMonth');if(stats.employees>0){sk.disabled=false;sk.style.background="#27ae60";}else{sk.disabled=true;sk.style.background="#7f8c8d";}
+    }
+
+    function renderRightPanel(){const mp=document.getElementById('manual-panel'),cp=document.getElementById('clipboard-panel');if(!activeCase||activeCase.type==='free'){if(activeCase&&activeCase.type==='free'){const mc=document.getElementById('manual-content'),dc=document.getElementById('demand-content');mc.innerHTML="Terminal Desbloqueado.<br>Comandos Úteis:<br>- sudo apt install pc<br>- sudo apt install steam";dc.innerHTML="<strong>MODO LIVRE</strong><br>Sem demandas ativas.";setTimeout(()=>cp.classList.add('show'),100);setTimeout(()=>mp.classList.add('show'),300);}else{mp.classList.remove('show');cp.classList.remove('show');}return;}const mc=document.getElementById('manual-content'),dc=document.getElementById('demand-content');if(activeCase.type==='soft')mc.innerHTML=`Cmd:<div class="code-block">${activeCase.problem.cmd}</div>`;else if(activeCase.type==='complex')mc.innerHTML=`Diag: terminal<br>Correção:<div class="code-block">${activeCase.problem.fixCmd}</div>`;else if(activeCase.type==='hard')mc.innerHTML=`Peça:<div class="code-block">${activeCase.part}</div>`;else if(activeCase.type==='format')mc.innerHTML=`1. Gravar ISO<br>2. Boot Pendrive`;dc.innerHTML=`<strong>${activeCase.clientName}</strong><br>Status: Aberto<br>$${activeCase.reward}`;setTimeout(()=>cp.classList.add('show'),100);setTimeout(()=>mp.classList.add('show'),300);}
+
+    function generateDay(){missions=[];const types=Object.keys(clientTypes);let max=stats.reputation>40?2:1;types.forEach(t=>{for(let i=0;i<Math.floor(Math.random()*(max+1));i++)createMission(t);});if(missions.length===0)createMission('Padrão');renderMissions();}
+    function createMission(t){const d=clientTypes[t];let type='soft',prob=null,part=null,r=100;const rnd=Math.random();if(stats.hasTools&&rnd>0.6){type='hard';part=['Fonte','SSD','RAM'][Math.floor(Math.random()*3)];r=200;}else if(rnd>0.8){type='complex';prob=techProblems[Math.floor(Math.random()*techProblems.length)];r=300;}else if(rnd>0.95){type='format';r=150;}else{prob=simpleTasks[Math.floor(Math.random()*simpleTasks.length)];}missions.push({id:Math.random(),clientName:t+" #"+Math.floor(Math.random()*99),type:type,problem:prob,part:part,reward:Math.floor(r*d.pay),done:false});}
+    function renderMissions(){const l=document.getElementById('caseList');l.innerHTML='';missions.forEach(m=>{const d=document.createElement('div');d.className=`case-card ${m.done?'done':''} ${activeCase===m?'active':''}`;d.innerHTML=`<strong>${m.clientName}</strong><br>$${m.reward}`;d.onclick=()=>selectCase(m);l.appendChild(d);});if(missions.every(m=>m.done))document.getElementById('btnNextDay').style.display='block';}
+    function selectCase(m){if(m.done||activeCase)return;activeCase=m;showTab('terminal');renderRightPanel();document.getElementById('btnFreeMode').classList.remove('active');document.getElementById('userPrefix').innerText="root@client:~# ";document.getElementById('inputLine').classList[m.type==='hard'||m.type==='format'?'add':'remove']('hidden');if(m.type==='hard'){document.getElementById('tabHardware').classList.remove('hidden');setupHardware();}if(m.type==='format'){document.getElementById('usb').style.display='block';document.getElementById('btnBurnIso').style.display='block';}renderMissions();}
+    function finishCase(ok){if(!ok)return;stats.money+=activeCase.reward;stats.reputation=Math.min(100,stats.reputation+5);activeCase.done=true;activeCase=null;document.getElementById('tabHardware').classList.add('hidden');renderRightPanel();saveGame();updateUI();renderMissions();} // Save aqui
+
+    document.getElementById('termInput').onkeydown=(e)=>{if(e.key==='Enter'){let val=e.target.value.trim();if(devAuthState.waiting){clearTimeout(devAuthState.timer);if(val==='5086'){activateDevMode();}else{print(">> SENHA INCORRETA.","red");}devAuthState.waiting=false;e.target.value='';return;}if(val==='Dev_Patinho Test Mode'){print(">> MODO DEV DETECTADO.","yellow");print("⚠️ DIGITE SENHA (60s):","orange");devAuthState.waiting=true;devAuthState.timer=setTimeout(()=>{if(devAuthState.waiting){devAuthState.waiting=false;print(">> TEMPO ESGOTADO.","red");}},60000);e.target.value='';return;}print(document.getElementById('userPrefix').innerText+val);e.target.value='';if(val==='sudo apt install pc'){print("Baixando VM... [100%]","lime");stats.virtualPcUnlocked=true;document.getElementById('tabVirtualPC').classList.remove('hidden');saveGame();updateUI();return;}if(!activeCase)return;if(activeCase.type==='complex'){if(val===activeCase.problem.fixCmd){print(activeCase.problem.fixMsg,"lime");setTimeout(()=>finishCase(true),1000);}else if(activeCase.problem.diag[val])print(activeCase.problem.diag[val],"orange");else print("Cmd inválido.","red");}else if(activeCase.type==='soft'&&val===activeCase.problem.cmd){print("OK.","lime");setTimeout(()=>finishCase(true),1000);}}};
+    function activateDevMode(){stats.money=999999999;stats.reputation=200;stats.hasTools=true;stats.virtualPcUnlocked=true;stats.obsInstalled=true;stats.steamInstalledInVM=true;document.getElementById('tabShop').classList.remove('hidden');document.getElementById('tabVirtualPC').classList.remove('hidden');document.getElementById('tabHardware').classList.remove('hidden');document.getElementById('obs-icon').classList.remove('hidden');document.getElementById('userPrefix').innerText="dev@patinho:~# ";print(">> ACESSO CONCEDIDO! 🦆","gold");saveGame();updateUI();}
+    
+    function print(t,c="inherit"){const d=document.createElement('div');d.style.color=c;d.innerText=t;document.getElementById('output').appendChild(d);}
+    function showTab(t){document.querySelectorAll('.screen-view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+t).classList.add('active');}
+    function nextDay(){stats.day++;document.getElementById('btnNextDay').style.display='none';generateDay();saveGame();updateUI();}
+    function setupHardware(){['Fonte','SSD','RAM'].forEach(p=>{let el=document.getElementById('comp-'+p);el.className='component '+(activeCase.part===p?'broken':'fixed');el.innerText=p+(activeCase.part===p?" (RUIM)":" (OK)");});}
+    function interactHardware(p){if(!activeCase||activeCase.type!=='hard')return;let el=document.getElementById('comp-'+p);if(el.classList.contains('broken')){el.className='component';el.innerText="VAZIO";}else{if(stats.inventory.includes(p)){stats.inventory.splice(stats.inventory.indexOf(p),1);el.className='component fixed';setTimeout(()=>finishCase(true),1000);}else alert("Sem peça!");}updateUI();}
+    function buyTools(){if(stats.money>=200){stats.money-=200;stats.hasTools=true;document.getElementById('btnBuyTools').style.display='none';document.getElementById('tabShop').classList.remove('hidden');document.getElementById('btnUpgradePC').classList.remove('hidden');saveGame();updateUI();}}
+    function upgradeShop(t){if(t==='workstation'&&stats.money>=500){stats.money-=500;document.getElementById('btnUpgradePC').style.display='none';saveGame();}updateUI();}
+    function buyPart(p,c){if(stats.money>=c){stats.money-=c;stats.inventory.push(p);saveGame();updateUI();}}
+    function hireEmp(){if(stats.money>=1000){stats.money-=1000;stats.employees++;saveGame();updateUI();}}
+    function skipMonth(){if(stats.employees>0){stats.money+=stats.employees*400;stats.day+=30;saveGame();updateUI();}}
+    const usb=document.getElementById('usb');usb.ondragstart=()=>{document.getElementById('dropZone').style.display='flex';};document.getElementById('dropZone').ondragover=(e)=>e.preventDefault();document.getElementById('dropZone').ondrop=()=>{if(!stats.usbReady)return alert("ISO?");document.getElementById('dropZone').style.display='none';print("Formatando...","lime");stats.usbReady=false;usb.style.display='none';document.getElementById('btnBurnIso').style.display='none';setTimeout(()=>finishCase(true),1500);};function burnIso(){stats.usbReady=true;print("ISO OK!","orange");}
+
+    // CARREGAR JOGO AO INICIAR
+    loadGame();
+    generateDay();
+    updateUI();
+</script>
+</body>
+</html>

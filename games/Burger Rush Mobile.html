@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Burger Rush Mobile v2</title>
+    <style>
+        :root {
+            --bg-color: #34495e;
+            --plate-color: #ecf0f1;
+            --bun-color: #f39c12;
+            --meat-color: #5d4037;
+            --cheese-color: #f1c40f;
+            --lettuce-color: #2ecc71;
+            --tomato-color: #e74c3c;
+        }
+
+        * { box-sizing: border-box; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- UI do Topo --- */
+        #ui-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* --- Área do Pedido (Receita) --- */
+        #order-area {
+            height: 12vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: rgba(255,255,255,0.1);
+            margin: 10px;
+            border-radius: 10px;
+        }
+        .order-title { font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; }
+        .order-ingredients { display: flex; gap: 5px; align-items: flex-end; }
+        .mini-ingredient { width: 25px; height: 8px; border-radius: 2px; }
+        .mini-pao-cima { height: 12px; border-radius: 10px 10px 2px 2px; }
+        .mini-pao-baixo { height: 10px; border-radius: 2px 2px 10px 10px; }
+
+
+        /* --- Área de Montagem (CORRIGIDA) --- */
+        #game-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            padding-bottom: 30px;
+            perspective: 1000px;
+        }
+
+        #plate-container {
+             position: relative;
+             width: 220px;
+             height: 300px; /* Altura máxima do hambúrguer */
+             display: flex;
+             justify-content: center;
+             align-items: flex-end;
+        }
+
+        #plate {
+            width: 220px;
+            height: 25px;
+            background: var(--plate-color);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 0;
+        }
+
+        /* --- Ingredientes Visuais na Pilha (CORRIGIDO) --- */
+        .ingredient {
+            position: absolute; /* Mudança chave: posição absoluta */
+            width: 180px;
+            height: 30px;
+            border-radius: 10px;
+            border: 3px solid rgba(0,0,0,0.15);
+            /* Sombra para dar profundidade */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            
+            /* Animação suave de entrada */
+            opacity: 0;
+            transform: scale(0.8) translateY(-50px);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* Classe adicionada via JS para ativar a animação */
+        .ingredient.placed {
+             opacity: 1;
+             transform: scale(1) translateY(0);
+        }
+
+        /* Estilos Específicos - Alturas ajustadas para o novo sistema */
+        .ing-pao-baixo { background: var(--bun-color); height: 35px; border-radius: 10px 10px 20px 20px; width: 180px; }
+        .ing-pao-cima { background: var(--bun-color); height: 55px; border-radius: 35px 35px 10px 10px; width: 190px; }
+        .ing-carne { background: var(--meat-color); width: 185px; height: 35px; border-radius: 15px; border-color: #3e2723; }
+        .ing-queijo { background: var(--cheese-color); width: 195px; border-radius: 5px; height: 20px; border-color: #f39c12;}
+        .ing-alface { background: var(--lettuce-color); width: 200px; border-radius: 25px; height: 25px; border: 3px dashed #27ae60; }
+        .ing-tomate { background: var(--tomato-color); width: 170px; height: 25px; border-radius: 8px; border-color: #c0392b;}
+
+        /* --- Controles Mobile --- */
+        #controls {
+            height: 28vh; /* Um pouco maior */
+            background: #2c3e50;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px;
+            border-top: 5px solid rgba(0,0,0,0.2);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+        }
+        .btn:active { transform: translateY(6px); box-shadow: 0 0px 0 rgba(0,0,0,0.3); }
+
+        /* Cores dos botões */
+        .btn-pao { background: var(--bun-color); }
+        .btn-carne { background: var(--meat-color); color: #ecf0f1; text-shadow: none;}
+        .btn-queijo { background: var(--cheese-color); }
+        .btn-alface { background: var(--lettuce-color); }
+        .btn-tomate { background: var(--tomato-color); color: #ecf0f1; text-shadow: none;}
+        .btn-entrega { 
+            background: #e67e22; 
+            color: white; 
+            grid-row: span 2; 
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            text-shadow: none;
+        }
+
+        /* --- Tela de Game Over --- */
+        #game-over {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            display: none;
+        }
+        #restart-btn {
+            padding: 15px 30px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Animação de erro no prato */
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px) rotate(-2deg); }
+            40%, 80% { transform: translateX(10px) rotate(2deg); }
+        }
+        .shake { animation: shakeError 0.4s ease-in-out; }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-bar">
+        <div id="score">Pontos: 0</div>
+        <div id="lives">❤️❤️❤️</div>
+    </div>
+
+    <div id="order-area">
+        <div class="order-title">PEDIDO:</div>
+        <div class="order-ingredients" id="order-display"></div>
+    </div>
+
+    <div id="game-area">
+        <div id="plate-container">
+             <div id="plate"></div>
+             </div>
+    </div>
+
+    <div id="controls">
+        <button class="btn btn-pao" onclick="addIngredient('pao-baixo')">Pão Baixo</button>
+        <button class="btn btn-carne" onclick="addIngredient('carne')">Carne</button>
+        <button class="btn btn-queijo" onclick="addIngredient('queijo')">Queijo</button>
+        
+        <button class="btn btn-pao" onclick="addIngredient('pao-cima')">Pão Topo</button>
+        <button class="btn btn-alface" onclick="addIngredient('alface')">Alface</button>
+        <button class="btn btn-tomate" onclick="addIngredient('tomate')">Tomate</button>
+
+        <button class="btn btn-entrega" onclick="deliverBurger()">🔔 ENTREGAR</button>
+    </div>
+
+    <div id="game-over">
+        <h1 style="color:white">Fim de Jogo!</h1>
+        <h2 id="final-score" style="color:var(--bun-color)">Pontuação: 0</h2>
+        <button id="restart-btn" onclick="resetGame()">Jogar Novamente</button>
+    </div>
+
+    <script>
+        // Configuração do Jogo
+        let currentOrder = [];
+        let playerStack = [];
+        let score = 0;
+        let lives = 3;
+        let isGameOver = false;
+        
+        // Nova variável para controlar a altura da pilha
+        let currentStackHeight = 15; // Começa um pouco acima do prato
+
+        // Alturas visuais de "encaixe" para cada ingrediente (menor que a altura CSS real para dar sobreposição)
+        const overlapHeights = {
+            'pao-baixo': 25,
+            'carne': 22,
+            'queijo': 12,
+            'alface': 15,
+            'tomate': 15,
+            'pao-cima': 40
+        };
+
+        // Elementos DOM
+        const plateContainer = document.getElementById('plate-container');
+        const orderDisplay = document.getElementById('order-display');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const gameOverScreen = document.getElementById('game-over');
+
+        // Sons Simples
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function init() {
+            generateNewOrder();
+        }
+
+        function generateNewOrder() {
+            currentOrder = ['pao-baixo'];
+            let numIngredientes = Math.floor(Math.random() * 3) + 2; // 2 a 4 recheios
+            const recheios = ['carne', 'queijo', 'alface', 'tomate'];
+            for(let i=0; i<numIngredientes; i++) {
+                currentOrder.push(recheios[Math.floor(Math.random() * recheios.length)]);
+            }
+            currentOrder.push('pao-cima');
+            renderOrder();
+            clearPlate();
+        }
+
+        function renderOrder() {
+            orderDisplay.innerHTML = '';
+            currentOrder.forEach(item => {
+                const el = document.createElement('div');
+                let className = 'mini-ingredient';
+                if(item === 'pao-cima') className += ' mini-pao-cima';
+                if(item === 'pao-baixo') className += ' mini-pao-baixo';
+                el.className = className;
+                el.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue(`--${getColorVar(item)}`);
+                orderDisplay.appendChild(el);
+            });
+        }
+
+        function getColorVar(item) {
+            const map = { 'pao-baixo': 'bun-color', 'pao-cima': 'bun-color', 'carne': 'meat-color', 'queijo': 'cheese-color', 'alface': 'lettuce-color', 'tomate': 'tomato-color' };
+            return map[item];
+        }
+
+        function clearPlate() {
+            playerStack = [];
+            currentStackHeight = 15; // Reseta a altura
+            // Remove tudo exceto o prato base
+            Array.from(plateContainer.children).forEach(child => {
+                if(child.id !== 'plate') plateContainer.removeChild(child);
+            });
+        }
+
+        // Adicionar ingrediente (Lógica Corrigida)
+        window.addIngredient = function(type) {
+            if(isGameOver) return;
+
+            playerStack.push(type);
+            playTone(400 + (playerStack.length * 30), 'sine', 0.1);
+
+            // Cria o elemento visual
+            const div = document.createElement('div');
+            div.className = `ingredient ing-${type}`;
+            
+            // Define a posição vertical exata
+            div.style.bottom = currentStackHeight + 'px';
+            // Garante que o z-index aumente para ficar por cima
+            div.style.zIndex = playerStack.length + 5; 
+
+            plateContainer.appendChild(div);
+            
+            // Força um reflow para ativar a transição CSS
+            setTimeout(() => { div.classList.add('placed'); }, 10);
+
+            // Calcula a nova altura para o próximo item
+            currentStackHeight += overlapHeights[type] || 15;
+        }
+
+        window.deliverBurger = function() {
+            if(isGameOver) return;
+
+            if (JSON.stringify(playerStack) === JSON.stringify(currentOrder)) {
+                score += 100;
+                scoreEl.innerText = `Pontos: ${score}`;
+                playTone(880, 'square', 0.3); // Vitória
+                generateNewOrder();
+            } else {
+                lives--;
+                updateLives();
+                playTone(200, 'sawtooth', 0.4); // Erro
+                
+                plateContainer.classList.add('shake');
+                setTimeout(() => plateContainer.classList.remove('shake'), 400);
+                
+                if(lives <= 0) endGame();
+                else setTimeout(clearPlate, 400); // Limpa após a animação de erro
+            }
+        }
+
+        function updateLives() {
+            let hearts = '';
+            for(let i=0; i<lives; i++) hearts += '❤️';
+            livesEl.innerText = hearts;
+        }
+
+        function endGame() {
+            isGameOver = true;
+            document.getElementById('final-score').innerText = `Pontuação Final: ${score}`;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        window.resetGame = function() {
+            score = 0;
+            lives = 3;
+            isGameOver = false;
+            scoreEl.innerText = 'Pontos: 0';
+            updateLives();
+            gameOverScreen.style.display = 'none';
+            generateNewOrder();
+        }
+
+        init();
+    </script>
+</body>
+</html>

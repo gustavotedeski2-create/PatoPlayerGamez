@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mecânico Simulator v9.1 - Web Edition</title>
+    <style>
+        :root {
+            --bg-color: #1c1c1c;
+            --panel-bg: #263238;
+            --highlight: #00E676;
+            --accent: #FFD700;
+            --text: #ffffff;
+            --danger: #FF5252;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* TOPO */
+        #header {
+            background-color: #222;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .energy-container {
+            width: 150px;
+            height: 20px;
+            background: #444;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #energyBar {
+            height: 100%;
+            background: var(--highlight);
+            width: 100%;
+            transition: width 0.3s;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-sleep { background: #303F9F; }
+        .btn-shop { background: #E64A19; }
+        .btn-tablet { background: #7B1FA2; }
+        .btn-garage { background: #FBC02D; color: black; }
+        .btn-danger { background: var(--danger); }
+
+        /* MAIN LAYOUT */
+        #main {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* ESQUERDA: WORKSPACE */
+        #workspace {
+            flex: 2;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #444;
+            position: relative;
+        }
+
+        .car-info h2 { margin: 0; color: #4FC3F7; font-size: 2rem; }
+        .sintoma { background: #37474F; padding: 10px; margin-top: 10px; border-radius: 4px; font-style: italic; color: #ddd; }
+        
+        #tools-panel {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+        }
+        .tool-btn { background: #424242; }
+        .tool-btn.owned { background: #00C853; }
+
+        /* CANVAS MINIGAME */
+        #game-container {
+            flex: 1;
+            background: #111;
+            border: 2px solid #555;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            background: #111;
+            cursor: crosshair;
+        }
+
+        #overlay-msg {
+            position: absolute;
+            color: #aaa;
+            font-size: 1.5rem;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        /* DIREITA: ESTOQUE */
+        #inventory {
+            flex: 1;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            max-width: 300px;
+        }
+
+        .inv-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .inv-item {
+            background: #37474F;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .inv-item:hover { border-color: white; }
+        .no-stock { color: var(--danger); opacity: 0.7; }
+
+        /* MODALS */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #333;
+            width: 600px;
+            max-height: 80vh;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 20px; cursor: pointer; }
+        
+        .list-item {
+            background: #444;
+            margin: 5px 0;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* MULTIMETER INPUT */
+        #multimeter-input {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            background: #333;
+            padding: 20px;
+            border: 2px solid #FFC107;
+            border-radius: 8px;
+        }
+        input[type="number"] { padding: 10px; font-size: 1.2rem; width: 100px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div class="stats">
+            <span id="levelDisplay">NÍVEL 1</span>
+            <span id="moneyDisplay" style="color: var(--highlight);">R$ 1200.00</span>
+            <div class="energy-container" title="Energia">
+                <div id="energyBar"></div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn-sleep" onclick="game.sleep()">🛌 DORMIR</button>
+            <button class="btn-shop" onclick="ui.openShop()">🏬 LOJA</button>
+            <button class="btn-tablet" id="btnTablet" onclick="ui.openTablet()" disabled>📱 TABLET</button>
+            <button class="btn-garage" onclick="ui.openGarage()">🚘 GARAGEM</button>
+        </div>
+    </div>
+
+    <div id="main">
+        <div id="workspace">
+            <button id="btnBackClient" class="btn-danger" style="display:none; width: fit-content; margin-bottom: 10px;" onclick="game.backToClients()">⬅️ VOLTAR AOS CLIENTES</button>
+            
+            <div class="car-info">
+                <h2 id="carName">Carregando...</h2>
+                <div class="sintoma" id="carSymptom">...</div>
+            </div>
+
+            <div id="tools-panel">
+                </div>
+
+            <div id="game-container">
+                <canvas id="gameCanvas" width="600" height="400"></canvas>
+                <h3 id="overlay-msg">Selecione uma peça para começar.</h3>
+                
+                <div id="multimeter-input">
+                    <label>Digite o valor (ex: 12.4):</label>
+                    <input type="number" id="multiVal" step="0.1">
+                    <button onclick="minigame.checkMultimeter()">OK</button>
+                </div>
+            </div>
+            <div style="margin-top: 10px; color: #aaa; font-size: 0.9rem;">
+                Dica: Use o mouse para interagir nos minigames (Arrastar, Clicar, Bombear).
+            </div>
+        </div>
+
+        <div id="inventory">
+            <h3 style="margin-top:0;">Estoque de Peças</h3>
+            <div class="inv-grid" id="invGrid">
+                </div>
+        </div>
+    </div>
+
+    <div id="shopModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="ui.closeModals()">✖</span>
+            <h2>Loja de Peças & Ferramentas</h2>
+            <div id="shopList"></div>
+        </div>
+    </div>
+
+    <div id="garageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="ui.closeModals()">✖</span>
+            <h2>Minha Garagem & Leilão</h2>
+            <h3>Leilão do Dia</h3>
+            <div id="auctionList"></div>
+            <hr>
+            <h3>Meus Carros</h3>
+            <div id="myCarsList"></div>
+        </div>
+    </div>
+
+    <div id="tabletModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="ui.closeModals()">✖</span>
+            <h2>UberMechanic VIP</h2>
+            <div id="tabletList"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS DO JOGO ---
+        const TIERS = {
+            1: ["Fusca 1300", "Chevette", "Kombi"],
+            2: ["Fiat Uno", "Celta", "Ford Ka"],
+            3: ["Honda Civic", "Toyota Corolla", "Jeep"],
+            4: ["BMW 320i", "Mercedes C180", "Audi TT"],
+            5: ["Porsche 911", "Ferrari 488", "Mustang"],
+            6: ["Tesla Cybertruck", "Nave Espacial"]
+        };
+
+        const PECAS_INFO = {
+            "Pneu":        {custo: 50,  xp: 10, nv: 1, tag: "suspensao", game: "pump"},
+            "Bateria":     {custo: 150, xp: 20, nv: 1, tag: "eletrica",  game: "multimetro"},
+            "Radiador":    {custo: 250, xp: 40, nv: 2, tag: "motor",     game: "drag_liquid"},
+            "Velas":       {custo: 80,  xp: 25, nv: 2, tag: "motor",     game: "drag_part"},
+            "Suspensão":   {custo: 400, xp: 50, nv: 3, tag: "suspensao", game: "drag_part"},
+            "Alternador":  {custo: 350, xp: 55, nv: 3, tag: "eletrica",  game: "drag_part"},
+            "Injeção":     {custo: 600, xp: 80, nv: 4, tag: "motor",     game: "drag_part"},
+            "Turbo":       {custo: 1200,xp: 120,nv: 4, tag: "motor",     game: "drag_part"},
+            "Câmbio Auto": {custo: 2000,xp: 200,nv: 5, tag: "motor",     game: "drag_part"},
+            "Módulo ECU":  {custo: 1500,xp: 180,nv: 5, tag: "eletrica",  game: "multimetro"}
+        };
+
+        const FERRAMENTAS = {
+            "Multímetro":   {tipo: "eletrica", preco: 300},
+            "Scanner OBD":  {tipo: "motor",    preco: 1500},
+            "Estetoscópio": {tipo: "suspensao",preco: 500},
+            "Manual Técnico":{tipo: "passiva",  preco: 2000}
+        };
+
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const state = {
+            saldo: 1200,
+            xp: 0,
+            nivel: 1,
+            dia: 1,
+            energia: 100,
+            ferramentas: [],
+            estoque: {},
+            garagem: [],
+            auction: [],
+            
+            // Estado atual
+            modo: 'cliente', // cliente, garagem
+            carroAtual: '',
+            problemaReal: '',
+            pecaEmUso: null,
+            garageIndex: null
+        };
+
+        // Inicializa estoque zerado
+        for(let key in PECAS_INFO) state.estoque[key] = 0;
+
+        // --- SISTEMA DE SAVE ---
+        function saveGame() {
+            localStorage.setItem('mechanicSaveV9', JSON.stringify(state));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('mechanicSaveV9');
+            if(saved) {
+                const parsed = JSON.parse(saved);
+                Object.assign(state, parsed);
+                // Merge estoque novo se houver update
+                for(let key in PECAS_INFO) {
+                    if(state.estoque[key] === undefined) state.estoque[key] = 0;
+                }
+            }
+        }
+
+        // --- LOGICA PRINCIPAL ---
+        const game = {
+            init: function() {
+                loadGame();
+                game.generateAuction();
+                if(state.modo === 'cliente') game.newClient();
+                else ui.updateHUD(); // Se estiver na garagem, atualiza visual
+                
+                // Event Listeners Canvas
+                canvas.addEventListener('mousedown', minigame.onMouseDown);
+                canvas.addEventListener('mousemove', minigame.onMouseMove);
+                window.addEventListener('mouseup', minigame.onMouseUp);
+                
+                ui.updateHUD();
+                requestAnimationFrame(minigame.loop);
+            },
+
+            newClient: function() {
+                state.modo = 'cliente';
+                state.garageIndex = null;
+                
+                let tier = Math.min(6, state.nivel);
+                let carList = TIERS[Math.floor(Math.random() * tier) + 1];
+                state.carroAtual = carList[Math.floor(Math.random() * carList.length)];
+                
+                // Escolher problema baseado no nivel
+                let possible = Object.keys(PECAS_INFO).filter(k => PECAS_INFO[k].nv <= state.nivel);
+                state.problemaReal = possible[Math.floor(Math.random() * possible.length)];
+                
+                ui.updateHUD();
+                minigame.stop();
+                ui.showOverlay("Aguardando diagnóstico...");
+            },
+
+            startRepair: function(peca) {
+                if(state.estoque[peca] <= 0) { alert("Sem estoque!"); return; }
+                if(state.energia < 5) { alert("Você precisa dormir!"); return; }
+
+                state.estoque[peca]--;
+                state.energia -= 5;
+                state.pecaEmUso = peca;
+                ui.updateHUD();
+                
+                minigame.start(PECAS_INFO[peca].game, peca);
+            },
+
+            sleep: function() {
+                state.energia = 100;
+                state.dia++;
+                game.generateAuction();
+                if(state.modo === 'cliente') game.newClient();
+                saveGame();
+                ui.updateHUD();
+                alert("Dia novo! Energia restaurada.");
+            },
+
+            backToClients: function() {
+                game.newClient();
+            },
+
+            generateAuction: function() {
+                state.auction = [];
+                for(let i=0; i<3; i++) {
+                    let t = Math.floor(Math.random() * Math.min(6, state.nivel)) + 1;
+                    let cars = TIERS[t];
+                    let mod = cars[Math.floor(Math.random() * cars.length)];
+                    let prob = Object.keys(PECAS_INFO)[Math.floor(Math.random() * Object.keys(PECAS_INFO).length)];
+                    
+                    state.auction.push({
+                        modelo: mod,
+                        problema: prob,
+                        preco: t * 1000 + Math.floor(Math.random()*500),
+                        valorFinal: t * 3500 + 2000,
+                        status: "Quebrado"
+                    });
+                }
+            },
+
+            checkLevelUp: function() {
+                if(state.xp >= state.nivel * 300) {
+                    state.nivel++;
+                    state.xp = 0;
+                    alert("SUBIU DE NÍVEL! Agora nível " + state.nivel);
+                }
+            }
+        };
+
+        // --- MINIGAMES ENGINE ---
+        const minigame = {
+            active: false,
+            type: null,
+            data: {}, // Armazena estado do minigame atual (posições, progresso)
+            
+            start: function(type, partName) {
+                this.active = true;
+                this.type = type;
+                ui.hideOverlay();
+                document.getElementById('multimeter-input').style.display = 'none';
+
+                // Setup específico
+                if(type === 'pump') {
+                    this.data = { progress: 0, handleY: 150, dir: 0 };
+                } else if(type === 'drag_liquid') {
+                    this.data = { 
+                        x: 50, y: 200, w: 60, h: 80, isDragging: false, 
+                        target: {x: 400, y: 80, w: 80, h: 40} // Boca radiador
+                    };
+                } else if(type === 'drag_part') {
+                    // Alvo aleatorio
+                    let tx = 200 + Math.random() * 200;
+                    let ty = 100 + Math.random() * 150;
+                    this.data = {
+                        x: 50, y: 300, w: 60, h: 60, isDragging: false,
+                        target: {x: tx, y: ty, w: 60, h: 60},
+                        partName: partName
+                    };
+                } else if(type === 'multimetro') {
+                    this.data = { val: (11.5 + Math.random() * 3).toFixed(1), show: true };
+                    setTimeout(() => {
+                        this.data.show = false;
+                        document.getElementById('multimeter-input').style.display = 'flex';
+                        document.getElementById('multiVal').value = '';
+                        document.getElementById('multiVal').focus();
+                    }, 2000);
+                }
+            },
+
+            stop: function() {
+                this.active = false;
+                this.type = null;
+                document.getElementById('multimeter-input').style.display = 'none';
+            },
+
+            checkMultimeter: function() {
+                let userVal = document.getElementById('multiVal').value;
+                if(userVal == this.data.val) {
+                    minigame.finish(true, "Leitura Correta!");
+                } else {
+                    minigame.finish(false, "Leitura Incorreta! Era " + this.data.val);
+                }
+            },
+
+            finish: function(success, msg) {
+                this.stop();
+                let acertouPeca = (state.pecaEmUso === state.problemaReal);
+                
+                if(success && acertouPeca) {
+                    let val = PECAS_INFO[state.pecaEmUso].custo * 2.5;
+                    state.saldo += val;
+                    state.xp += PECAS_INFO[state.pecaEmUso].xp;
+                    
+                    alert("SUCESSO!\n" + msg + "\nGanhou R$" + val.toFixed(2));
+                    game.checkLevelUp();
+
+                    if(state.modo === 'garagem' && state.garageIndex !== null) {
+                        state.garagem[state.garageIndex].status = "Novo";
+                        alert("Carro restaurado! Valorizado.");
+                        ui.openGarage(); // Reabrir para ver
+                    } else {
+                        setTimeout(game.newClient, 500);
+                    }
+                } else {
+                    let errorMsg = msg;
+                    if(!acertouPeca) errorMsg = "Peça errada! O defeito era " + state.problemaReal;
+                    alert("FALHA!\n" + errorMsg);
+                    
+                    if(state.modo === 'cliente') setTimeout(game.newClient, 500);
+                    else ui.showOverlay("Tente novamente.");
+                }
+                saveGame();
+                ui.updateHUD();
+            },
+
+            // Loop de Renderização
+            loop: function() {
+                if(minigame.active) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    if(minigame.type === 'pump') minigame.drawPump();
+                    else if(minigame.type === 'drag_liquid') minigame.drawLiquid();
+                    else if(minigame.type === 'drag_part') minigame.drawPart();
+                    else if(minigame.type === 'multimetro') minigame.drawMultimeter();
+                }
+                requestAnimationFrame(minigame.loop);
+            },
+
+            // --- DESENHOS ---
+            drawPump: function() {
+                // Fundo
+                ctx.fillStyle = "#222"; ctx.fillRect(200, 150, 100, 200); // Pneu
+                ctx.fillStyle = "#666"; ctx.beginPath(); ctx.arc(250, 250, 30, 0, Math.PI*2); ctx.fill();
+                
+                // Bomba
+                ctx.fillStyle = "#111"; ctx.fillRect(450, 350, 60, 20); // Base
+                ctx.fillStyle = "silver"; ctx.fillRect(475, 150, 10, 200); // Eixo
+                
+                // Alavanca (Move)
+                ctx.fillStyle = "red"; 
+                ctx.fillRect(440, this.data.handleY, 80, 20);
+
+                // Progresso
+                ctx.fillStyle = "#333"; ctx.fillRect(50, 100, 30, 200);
+                let h = this.data.progress * 2; 
+                ctx.fillStyle = "#00E676"; ctx.fillRect(50, 300 - h, 30, h);
+
+                ctx.fillStyle = "white"; ctx.font = "16px Arial";
+                ctx.fillText("Arraste vermelho p/ cima/baixo", 350, 50);
+            },
+
+            drawLiquid: function() {
+                // Radiador
+                ctx.fillStyle = "#444"; ctx.fillRect(350, 100, 150, 200);
+                // Alvo
+                ctx.strokeStyle = "yellow"; ctx.lineWidth = 3;
+                ctx.strokeRect(this.data.target.x, this.data.target.y, this.data.target.w, this.data.target.h);
+                ctx.fillStyle = "yellow"; ctx.fillText("AQUI", 420, 70);
+
+                // Garrafa
+                ctx.fillStyle = "#03A9F4";
+                ctx.fillRect(this.data.x, this.data.y, this.data.w, this.data.h);
+                ctx.fillStyle = "white"; ctx.fillText("ADITIVO", this.data.x+5, this.data.y+40);
+            },
+
+            drawPart: function() {
+                // Motor BG
+                ctx.fillStyle = "#333"; ctx.fillRect(150, 50, 400, 300);
+                ctx.fillStyle = "#555"; ctx.fillText("MOTOR", 320, 80);
+
+                // Alvo
+                ctx.strokeStyle = "#00E676"; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
+                ctx.strokeRect(this.data.target.x, this.data.target.y, this.data.target.w, this.data.target.h);
+                ctx.setLineDash([]);
+                ctx.fillStyle = "#00E676"; ctx.fillText("ENCAIXE", this.data.target.x, this.data.target.y - 10);
+
+                // Peça
+                ctx.fillStyle = "#FF9800";
+                ctx.fillRect(this.data.x, this.data.y, this.data.w, this.data.h);
+                ctx.fillStyle = "black"; ctx.fillText(this.data.partName.substring(0,6), this.data.x+5, this.data.y+30);
+            },
+
+            drawMultimeter: function() {
+                // Bateria
+                ctx.fillStyle = "#222"; ctx.fillRect(150, 100, 150, 100);
+                ctx.fillStyle = "gray"; ctx.fillRect(160, 80, 20, 20); // -
+                ctx.fillStyle = "red";  ctx.fillRect(270, 80, 20, 20); // +
+
+                // Multimetro
+                ctx.fillStyle = "#FFC107"; ctx.fillRect(350, 80, 150, 200);
+                ctx.fillStyle = "#9E9D24"; ctx.fillRect(370, 100, 110, 50); // Tela
+
+                if(this.data.show) {
+                    ctx.fillStyle = "black"; ctx.font = "30px Consolas";
+                    ctx.fillText(this.data.val + " V", 380, 135);
+                }
+            },
+
+            // --- INPUTS ---
+            onMouseDown: function(e) {
+                if(!minigame.active) return;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                let d = minigame.data;
+
+                if(minigame.type === 'pump') {
+                    // Check hit alavanca
+                    if(mouseX >= 440 && mouseX <= 520 && mouseY >= d.handleY && mouseY <= d.handleY + 20) {
+                        d.isDragging = true;
+                    }
+                } else if(minigame.type === 'drag_liquid' || minigame.type === 'drag_part') {
+                    // Check hit item
+                    if(mouseX >= d.x && mouseX <= d.x + d.w && mouseY >= d.y && mouseY <= d.y + d.h) {
+                        d.isDragging = true;
+                        d.offsetX = mouseX - d.x;
+                        d.offsetY = mouseY - d.y;
+                    }
+                }
+            },
+
+            onMouseMove: function(e) {
+                if(!minigame.active) return;
+                let d = minigame.data;
+                if(!d.isDragging) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                if(minigame.type === 'pump') {
+                    let diff = mouseY - d.handleY;
+                    // Limita movimento
+                    let newY = d.handleY + diff;
+                    if(newY >= 150 && newY <= 320) {
+                        // Detecta bombeamento
+                        if(diff > 0 && d.dir !== 1) d.dir = 1; 
+                        if(diff < 0 && d.dir !== -1) {
+                            d.dir = -1;
+                            d.progress += 2; // Ganha progresso ao subir
+                        }
+                        d.handleY = newY;
+                        if(d.progress >= 100) minigame.finish(true, "Pneu Cheio!");
+                    }
+                } else if(minigame.type === 'drag_liquid' || minigame.type === 'drag_part') {
+                    d.x = mouseX - d.offsetX;
+                    d.y = mouseY - d.offsetY;
+                }
+            },
+
+            onMouseUp: function(e) {
+                if(!minigame.active) return;
+                let d = minigame.data;
+                if(!d.isDragging) return;
+                d.isDragging = false;
+
+                // Check Drop
+                if(minigame.type === 'drag_liquid' || minigame.type === 'drag_part') {
+                    // Check collision center
+                    let cx = d.x + d.w/2;
+                    let cy = d.y + d.h/2;
+                    
+                    if(cx >= d.target.x && cx <= d.target.x + d.target.w &&
+                       cy >= d.target.y && cy <= d.target.y + d.target.h) {
+                        minigame.finish(true, "Instalado!");
+                    } else {
+                        // Reset pos
+                        d.x = 50; d.y = (minigame.type==='drag_liquid') ? 200 : 300;
+                    }
+                }
+            }
+        };
+
+        // --- UI MANAGER ---
+        const ui = {
+            updateHUD: function() {
+                document.getElementById('levelDisplay').innerText = "NÍVEL " + state.nivel;
+                document.getElementById('moneyDisplay').innerText = "R$ " + state.saldo.toFixed(2);
+                document.getElementById('energyBar').style.width = state.energia + "%";
+                
+                // Botão tablet
+                document.getElementById('btnTablet').disabled = (state.nivel < 5);
+
+                // Carro info
+                if(state.modo === 'cliente') {
+                    document.getElementById('carName').innerText = "CLIENTE: " + state.carroAtual;
+                    document.getElementById('carName').style.color = "#4FC3F7";
+                    
+                    let tag = PECAS_INFO[state.problemaReal].tag;
+                    document.getElementById('carSymptom').innerText = `Sintoma: Falha no sistema de ${tag.toUpperCase()}.`;
+                    document.getElementById('btnBackClient').style.display = 'none';
+                } else {
+                    document.getElementById('carName').innerText = "GARAGEM: " + state.carroAtual;
+                    document.getElementById('carName').style.color = "#FFD700";
+                    document.getElementById('carSymptom').innerText = "Projeto Pessoal - Conserte para Vender";
+                    document.getElementById('btnBackClient').style.display = 'block';
+                }
+
+                // Inventory
+                const grid = document.getElementById('invGrid');
+                grid.innerHTML = '';
+                
+                // Filtra peças pelo nível
+                let available = Object.keys(PECAS_INFO).filter(k => PECAS_INFO[k].nv <= state.nivel);
+                
+                available.forEach(k => {
+                    let qtd = state.estoque[k];
+                    let div = document.createElement('div');
+                    div.className = 'inv-item';
+                    if(qtd <= 0) div.classList.add('no-stock');
+                    div.innerHTML = `<strong>${k}</strong><br>Qtd: ${qtd}`;
+                    div.onclick = () => game.startRepair(k);
+                    grid.appendChild(div);
+                });
+
+                // Ferramentas
+                const tPanel = document.getElementById('tools-panel');
+                tPanel.innerHTML = '';
+                for(let k in FERRAMENTAS) {
+                    if(FERRAMENTAS[k].tipo === 'passiva') continue;
+                    let has = state.ferramentas.includes(k);
+                    let btn = document.createElement('button');
+                    btn.className = 'tool-btn ' + (has ? 'owned' : '');
+                    btn.innerText = k;
+                    btn.disabled = !has;
+                    btn.onclick = () => ui.useTool(k);
+                    tPanel.appendChild(btn);
+                }
+            },
+
+            useTool: function(toolName) {
+                let toolType = FERRAMENTAS[toolName].tipo;
+                let problemTag = PECAS_INFO[state.problemaReal].tag;
+                if(toolType === problemTag) {
+                    alert("✅ SCANNER: Problema confirmado em " + problemTag.toUpperCase());
+                } else {
+                    alert("❌ SCANNER: Nada detectado.");
+                }
+            },
+
+            showOverlay: function(msg) {
+                document.getElementById('overlay-msg').innerText = msg;
+                document.getElementById('overlay-msg').style.display = 'block';
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+            },
+            
+            hideOverlay: function() {
+                document.getElementById('overlay-msg').style.display = 'none';
+            },
+
+            // Modals
+            openShop: function() {
+                const list = document.getElementById('shopList');
+                list.innerHTML = '';
+
+                // Peças
+                let h3 = document.createElement('h3'); h3.innerText = "Peças"; list.appendChild(h3);
+                for(let k in PECAS_INFO) {
+                    if(PECAS_INFO[k].nv <= state.nivel + 1) {
+                        let div = document.createElement('div');
+                        div.className = 'list-item';
+                        div.innerHTML = `<span>${k} (R$${PECAS_INFO[k].custo})</span> <button onclick="ui.buyPart('${k}')">Comprar</button>`;
+                        list.appendChild(div);
+                    }
+                }
+
+                // Ferramentas
+                let h3f = document.createElement('h3'); h3f.innerText = "Ferramentas"; list.appendChild(h3f);
+                for(let k in FERRAMENTAS) {
+                    if(!state.ferramentas.includes(k)) {
+                        let div = document.createElement('div');
+                        div.className = 'list-item';
+                        div.innerHTML = `<span>${k} (R$${FERRAMENTAS[k].preco})</span> <button onclick="ui.buyTool('${k}')">Comprar</button>`;
+                        list.appendChild(div);
+                    }
+                }
+                document.getElementById('shopModal').style.display = 'flex';
+            },
+
+            buyPart: function(k) {
+                let cost = PECAS_INFO[k].custo;
+                if(state.saldo >= cost) {
+                    state.saldo -= cost;
+                    state.estoque[k]++;
+                    ui.updateHUD();
+                } else alert("Sem saldo!");
+            },
+
+            buyTool: function(k) {
+                let cost = FERRAMENTAS[k].preco;
+                if(state.saldo >= cost) {
+                    state.saldo -= cost;
+                    state.ferramentas.push(k);
+                    ui.updateHUD();
+                    ui.openShop(); // Refresh list
+                } else alert("Sem saldo!");
+            },
+
+            openGarage: function() {
+                // Leilão
+                const aList = document.getElementById('auctionList');
+                aList.innerHTML = '';
+                state.auction.forEach((car, idx) => {
+                    let div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.innerHTML = `<span>${car.modelo} (Quebrado) - R$${car.preco}</span> <button class="btn-shop" onclick="ui.buyCar(${idx})">Comprar</button>`;
+                    aList.appendChild(div);
+                });
+
+                // Meus Carros
+                const mList = document.getElementById('myCarsList');
+                mList.innerHTML = '';
+                state.garagem.forEach((car, idx) => {
+                    let div = document.createElement('div');
+                    div.className = 'list-item';
+                    let action = '';
+                    if(car.status === "Quebrado") {
+                        action = `<button class="btn-tablet" onclick="ui.fixCar(${idx})">Consertar</button>`;
+                        div.style.color = "#FF5252";
+                    } else {
+                        action = `<button class="btn-garage" onclick="ui.sellCar(${idx})">Vender (R$${car.valorFinal})</button>`;
+                        div.style.color = "#00E676";
+                    }
+                    div.innerHTML = `<span>${car.modelo} [${car.status}]</span> ${action}`;
+                    mList.appendChild(div);
+                });
+                
+                document.getElementById('garageModal').style.display = 'flex';
+            },
+
+            buyCar: function(idx) {
+                let car = state.auction[idx];
+                if(state.saldo >= car.preco) {
+                    state.saldo -= car.preco;
+                    state.garagem.push(JSON.parse(JSON.stringify(car))); // Clone
+                    state.auction.splice(idx, 1);
+                    ui.updateHUD();
+                    ui.openGarage();
+                } else alert("Sem saldo!");
+            },
+
+            fixCar: function(idx) {
+                state.modo = 'garagem';
+                state.garageIndex = idx;
+                let c = state.garagem[idx];
+                state.carroAtual = c.modelo;
+                state.problemaReal = c.problema;
+                ui.closeModals();
+                ui.updateHUD();
+                ui.showOverlay("Carro carregado. Inicie o conserto.");
+            },
+
+            sellCar: function(idx) {
+                let c = state.garagem[idx];
+                state.saldo += c.valorFinal;
+                state.garagem.splice(idx, 1);
+                ui.updateHUD();
+                ui.openGarage();
+                alert("Vendido! Lucro obtido.");
+            },
+
+            openTablet: function() {
+                const list = document.getElementById('tabletList');
+                list.innerHTML = '';
+                for(let i=0; i<3; i++) {
+                    let t = Math.floor(Math.random() * 3) + 3; // Tier 3-6
+                    let car = TIERS[t][0]; // Simplificado
+                    let pay = Math.floor(Math.random() * 800) + 300;
+                    
+                    let div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.innerHTML = `<span style="color:#E040FB">VIP: ${car} (+R$${pay})</span> <button class="btn-tablet" onclick="ui.acceptVip('${car}')">Aceitar</button>`;
+                    list.appendChild(div);
+                }
+                document.getElementById('tabletModal').style.display = 'flex';
+            },
+
+            acceptVip: function(carName) {
+                state.modo = 'cliente';
+                state.carroAtual = carName;
+                let possible = Object.keys(PECAS_INFO);
+                state.problemaReal = possible[Math.floor(Math.random() * possible.length)];
+                ui.closeModals();
+                ui.updateHUD();
+                ui.showOverlay("Cliente VIP Aceito. Não erre!");
+            },
+
+            closeModals: function() {
+                document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            }
+        };
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = game.init;
+
+    </script>
+</body>
+</html>
