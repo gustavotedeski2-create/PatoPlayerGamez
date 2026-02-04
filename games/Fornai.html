@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle Royale V4 - Final</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        
+        /* Interface (HUD) */
+        #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+        
+        .top-info {
+            display: flex; justify-content: center; gap: 40px;
+            padding: 20px; color: white; text-shadow: 2px 2px 0 #000;
+        }
+
+        .phase-box {
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border-top: 4px solid #fff;
+            text-align: center;
+            min-width: 150px;
+        }
+        .phase-box.closing { border-color: #e74c3c; animation: pulse 0.8s infinite alternate; }
+        
+        #stats-bar {
+            position: absolute; bottom: 20px; left: 20px;
+            display: flex; gap: 15px;
+        }
+        .stat {
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 5px; min-width: 80px;
+            border-left: 5px solid #555;
+        }
+        
+        #minimap-wrap {
+            position: absolute; bottom: 20px; right: 20px;
+            border: 4px solid #fff; border-radius: 50%;
+            width: 200px; height: 200px; overflow: hidden;
+            background: #222;
+        }
+
+        #game-over {
+            display: none; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: rgba(0,0,0,0.95);
+            color: white; padding: 40px; text-align: center; border-radius: 10px;
+            border: 2px solid #f1c40f; pointer-events: auto; z-index: 100;
+        }
+        
+        button {
+            background: #27ae60; color: white; border: none; padding: 15px 30px;
+            font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px;
+        }
+        button:hover { background: #2ecc71; }
+
+        @keyframes pulse { from { box-shadow: 0 0 10px #e74c3c; } to { box-shadow: 0 0 20px #c0392b; } }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div class="top-info">
+            <div style="font-size: 24px;">VIVOS: <span id="alive-count" style="color:#e74c3c">--</span></div>
+            
+            <div id="zone-display" class="phase-box">
+                <div id="zone-label">PREPARAÇÃO</div>
+                <div id="zone-timer" style="font-size: 28px; font-weight: bold;">00:00</div>
+            </div>
+            
+            <div style="font-size: 24px;">KILLS: <span id="kill-count">0</span></div>
+        </div>
+
+        <div id="stats-bar">
+            <div class="stat" style="border-color: #e74c3c">VIDA<br><span id="hp-val" style="font-size: 22px">100</span></div>
+            <div class="stat" style="border-color: #f1c40f">ARMA<br><span id="wep-val" style="font-size: 18px">PUNHOS</span></div>
+            <div class="stat" style="border-color: #3498db">BALAS<br><span id="ammo-val" style="font-size: 22px">--</span></div>
+        </div>
+
+        <div id="minimap-wrap">
+            <canvas id="minimap" width="200" height="200"></canvas>
+        </div>
+    </div>
+
+    <div id="game-over">
+        <h1 id="go-title">FIM DE JOGO</h1>
+        <p id="go-msg">...</p>
+        <button onclick="location.reload()">JOGAR NOVAMENTE</button>
+    </div>
+
+    <canvas id="game"></canvas>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        const CONFIG = {
+            mapSize: 3200,
+            botCount: 29, // +1 Player = 30
+            lootCount: 100,
+            playerSpeed: 5,
+            zoneDamage: 0.5
+        };
+
+        // Fases da Zona (Espera em segundos, Tempo encolhendo em segundos, Raio final)
+        const ZONE_PHASES = [
+            { wait: 5,  shrink: 0,  radius: CONFIG.mapSize },      // Fase 0: Inicio
+            { wait: 30, shrink: 20, radius: 2000 },                // Fase 1
+            { wait: 20, shrink: 20, radius: 1000 },                // Fase 2
+            { wait: 15, shrink: 30, radius: 0 }                    // Fase Final
+        ];
+
+        const WEAPONS = {
+            fists:   { name: 'Punhos',  type: 'melee', damage: 8,  range: 35, delay: 20, color: '#bdc3c7', ammo: Infinity },
+            pistol:  { name: 'Pistola', type: 'gun',   damage: 15, range: 400, delay: 18, speed: 18, spread: 0.05, count: 1, color: '#f1c40f', ammo: 40 },
+            smg:     { name: 'SMG',     type: 'gun',   damage: 9,  range: 350, delay: 5,  speed: 22, spread: 0.15, count: 1, color: '#9b59b6', ammo: 120 },
+            shotgun: { name: 'Shotgun', type: 'gun',   damage: 10, range: 250, delay: 55, speed: 16, spread: 0.35, count: 6, color: '#e67e22', ammo: 20 },
+            sniper:  { name: 'Sniper',  type: 'gun',   damage: 80, range: 900, delay: 80, speed: 40, spread: 0.0,  count: 1, color: '#2ecc71', ammo: 10 }
+        };
+
+        // --- SISTEMA ---
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const miniCanvas = document.getElementById('minimap');
+        const miniCtx = miniCanvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let game = {
+            active: true,
+            obstacles: [],
+            entities: [],
+            bullets: [],
+            loots: [],
+            camera: {x:0, y:0},
+            player: null,
+            zone: { 
+                currentRadius: CONFIG.mapSize, 
+                targetRadius: CONFIG.mapSize,
+                x: CONFIG.mapSize/2, 
+                y: CONFIG.mapSize/2,
+                phaseIndex: 0,
+                timer: 0,
+                state: 'wait' // 'wait' ou 'shrink'
+            }
+        };
+
+        let keys = {};
+        let mouse = {x:0, y:0};
+
+        // --- CLASSES ---
+
+        class Entity {
+            constructor(x, y, isBot) {
+                this.x = x; this.y = y;
+                this.isBot = isBot;
+                this.radius = 18;
+                this.hp = 100;
+                this.maxHp = 100;
+                this.dead = false;
+                this.angle = 0;
+                this.weapon = WEAPONS.fists;
+                this.ammo = Infinity;
+                this.attackTimer = 0;
+                this.color = isBot ? '#e74c3c' : '#3498db';
+                
+                // IA Vars
+                this.target = null;
+                this.moveDir = {x:0, y:0};
+                this.changeDirTimer = 0;
+            }
+
+            equip(key) {
+                this.weapon = WEAPONS[key];
+                this.ammo = this.weapon.ammo;
+            }
+
+            takeDamage(amt) {
+                this.hp -= amt;
+                if(this.hp <= 0) this.dead = true;
+            }
+
+            move(dx, dy) {
+                // Tenta mover X
+                let nextX = this.x + dx;
+                if(!checkWallCollision(nextX, this.y, this.radius)) this.x = nextX;
+                
+                // Tenta mover Y
+                let nextY = this.y + dy;
+                if(!checkWallCollision(this.x, nextY, this.radius)) this.y = nextY;
+
+                // Limites
+                this.x = Math.max(0, Math.min(CONFIG.mapSize, this.x));
+                this.y = Math.max(0, Math.min(CONFIG.mapSize, this.y));
+            }
+
+            shoot() {
+                if(this.attackTimer > 0) return;
+
+                if(this.weapon.type === 'melee') {
+                    this.attackTimer = this.weapon.delay;
+                    // Hitbox simples frontal
+                    game.entities.forEach(e => {
+                        if(e === this || e.dead) return;
+                        let d = Math.hypot(e.x - this.x, e.y - this.y);
+                        if(d < this.weapon.range) {
+                            e.takeDamage(this.weapon.damage);
+                            // Knockback
+                            e.x += Math.cos(this.angle) * 10;
+                            e.y += Math.sin(this.angle) * 10;
+                        }
+                    });
+                } else {
+                    if(this.ammo <= 0) {
+                        this.weapon = WEAPONS.fists; // Volta pro soco se acabar bala
+                        return;
+                    }
+                    this.ammo--;
+                    this.attackTimer = this.weapon.delay;
+                    
+                    let count = this.weapon.count || 1;
+                    for(let i=0; i<count; i++) {
+                        let spread = (Math.random()-0.5) * this.weapon.spread;
+                        game.bullets.push({
+                            x: this.x, y: this.y,
+                            vx: Math.cos(this.angle + spread) * this.weapon.speed,
+                            vy: Math.sin(this.angle + spread) * this.weapon.speed,
+                            life: 60,
+                            damage: this.weapon.damage,
+                            owner: this
+                        });
+                    }
+                }
+            }
+
+            updateAI() {
+                if(this.dead) return;
+
+                // 1. Zona (Prioridade Máxima)
+                let distToZone = Math.hypot(this.x - game.zone.x, this.y - game.zone.y);
+                if(distToZone > game.zone.currentRadius) {
+                    this.hp -= CONFIG.zoneDamage;
+                    let angle = Math.atan2(game.zone.y - this.y, game.zone.x - this.x);
+                    this.angle = angle;
+                    this.move(Math.cos(angle)*CONFIG.playerSpeed, Math.sin(angle)*CONFIG.playerSpeed);
+                    return;
+                }
+
+                // 2. Procurar Loot (Se estiver de punhos)
+                if(this.weapon.name === 'Punhos') {
+                    let bestLoot = null;
+                    let minDist = 500;
+                    game.loots.forEach(l => {
+                        if(l.type === 'weapon') {
+                            let d = Math.hypot(l.x - this.x, l.y - this.y);
+                            if(d < minDist) { minDist = d; bestLoot = l; }
+                        }
+                    });
+
+                    if(bestLoot) {
+                        let angle = Math.atan2(bestLoot.y - this.y, bestLoot.x - this.x);
+                        this.angle = angle;
+                        this.move(Math.cos(angle)*CONFIG.playerSpeed, Math.sin(angle)*CONFIG.playerSpeed);
+                        return;
+                    }
+                }
+
+                // 3. Combate
+                let enemy = null;
+                let minDist = 400;
+                game.entities.forEach(e => {
+                    if(e !== this && !e.dead) {
+                        let d = Math.hypot(e.x - this.x, e.y - this.y);
+                        if(d < minDist) { minDist = d; enemy = e; }
+                    }
+                });
+
+                if(enemy) {
+                    let angle = Math.atan2(enemy.y - this.y, enemy.x - this.x);
+                    this.angle = angle;
+                    
+                    if(this.weapon.name === 'Punhos') {
+                        // Rushar
+                        this.move(Math.cos(angle)*CONFIG.playerSpeed, Math.sin(angle)*CONFIG.playerSpeed);
+                        if(minDist < 40) this.shoot();
+                    } else {
+                        // Atirar de longe
+                        if(minDist > 200) this.move(Math.cos(angle)*CONFIG.playerSpeed, Math.sin(angle)*CONFIG.playerSpeed);
+                        else this.move(-Math.cos(angle)*CONFIG.playerSpeed, -Math.sin(angle)*CONFIG.playerSpeed);
+                        
+                        // Raycast simples (não atira em parede)
+                        if(Math.random() < 0.1) this.shoot();
+                    }
+                } else {
+                    // Vagar
+                    this.changeDirTimer--;
+                    if(this.changeDirTimer <= 0) {
+                        let ang = Math.random() * Math.PI * 2;
+                        this.moveDir = {x: Math.cos(ang), y: Math.sin(ang)};
+                        this.changeDirTimer = 60;
+                        this.angle = ang;
+                    }
+                    this.move(this.moveDir.x * 2, this.moveDir.y * 2);
+                }
+            }
+
+            draw(ctx) {
+                if(this.dead) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Desenhar Arma ou Mãos
+                if(this.weapon.name === 'Punhos') {
+                    ctx.fillStyle = '#d35400';
+                    ctx.beginPath();
+                    ctx.arc(15, -10, 6, 0, Math.PI*2); // Mão esq
+                    ctx.arc(15, 10, 6, 0, Math.PI*2);  // Mão dir
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = this.weapon.color;
+                    ctx.fillRect(10, -5, 25, 10);
+                }
+
+                // Corpo
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        // --- GERAÇÃO DE MAPA E UTILITÁRIOS ---
+
+        function checkWallCollision(x, y, r) {
+            for(let o of game.obstacles) {
+                // AABB simples para retângulos
+                let cx = Math.max(o.x, Math.min(x, o.x + o.w));
+                let cy = Math.max(o.y, Math.min(y, o.y + o.h));
+                let dist = Math.hypot(x - cx, y - cy);
+                if(dist < r) return true;
+            }
+            return false;
+        }
+
+        // FUNÇÃO CRÍTICA: Encontra lugar seguro para nascer
+        function getSafePosition(radius) {
+            let attempts = 0;
+            while(attempts < 1000) {
+                let x = Math.random() * (CONFIG.mapSize - 100) + 50;
+                let y = Math.random() * (CONFIG.mapSize - 100) + 50;
+                if(!checkWallCollision(x, y, radius + 10)) {
+                    return {x, y};
+                }
+                attempts++;
+            }
+            return {x: 100, y: 100}; // Fallback (não deve acontecer)
+        }
+
+        function createMap() {
+            // Paredes das bordas
+            game.obstacles.push({x: -100, y: -100, w: CONFIG.mapSize+200, h: 100}); // Top
+            game.obstacles.push({x: -100, y: CONFIG.mapSize, w: CONFIG.mapSize+200, h: 100}); // Bot
+            game.obstacles.push({x: -100, y: 0, w: 100, h: CONFIG.mapSize}); // Left
+            game.obstacles.push({x: CONFIG.mapSize, y: 0, w: 100, h: CONFIG.mapSize}); // Right
+
+            // Prédios aleatórios
+            for(let i=0; i<60; i++) {
+                let w = 100 + Math.random()*200;
+                let h = 100 + Math.random()*200;
+                let x = Math.random() * (CONFIG.mapSize - w);
+                let y = Math.random() * (CONFIG.mapSize - h);
+                game.obstacles.push({x, y, w, h});
+            }
+        }
+
+        function spawnLoot() {
+            const types = ['pistol', 'smg', 'shotgun', 'sniper'];
+            for(let i=0; i<CONFIG.lootCount; i++) {
+                let pos = getSafePosition(15);
+                let isWeapon = Math.random() > 0.4;
+                game.loots.push({
+                    x: pos.x, y: pos.y,
+                    type: isWeapon ? 'weapon' : 'health',
+                    key: isWeapon ? types[Math.floor(Math.random()*types.length)] : null,
+                    color: isWeapon ? '#f1c40f' : '#2ecc71',
+                    size: 15,
+                    angle: Math.random()
+                });
+            }
+        }
+
+        function init() {
+            createMap();
+            spawnLoot();
+
+            // Player Spawn Seguro
+            let pPos = getSafePosition(20);
+            game.player = new Entity(pPos.x, pPos.y, false);
+            game.entities.push(game.player);
+
+            // Bots Spawn Seguro
+            for(let i=0; i<CONFIG.botCount; i++) {
+                let bPos = getSafePosition(20);
+                game.entities.push(new Entity(bPos.x, bPos.y, true));
+            }
+
+            // Iniciar Timer da Zona
+            startZoneLogic();
+            loop();
+        }
+
+        // --- LÓGICA DA ZONA ---
+        function startZoneLogic() {
+            setInterval(() => {
+                if(!game.active) return;
+                
+                let phase = ZONE_PHASES[game.zone.phaseIndex];
+                if(!phase) return;
+
+                if(game.zone.state === 'wait') {
+                    game.zone.timer++;
+                    updateHUD(phase.wait - game.zone.timer, "ZONA EM");
+                    
+                    if(game.zone.timer >= phase.wait) {
+                        game.zone.state = 'shrink';
+                        game.zone.timer = 0;
+                        game.zone.targetRadius = phase.radius;
+                    }
+                } else if(game.zone.state === 'shrink') {
+                    // O encolhimento é feito no update loop para ser suave
+                    // Aqui controlamos apenas o tempo que leva para fechar
+                    game.zone.timer++;
+                    updateHUD(phase.shrink - game.zone.timer, "FECHANDO");
+                    
+                    // Calcular quanto diminuir por frame
+                    let shrinkAmount = (game.zone.currentRadius - game.zone.targetRadius) / ((phase.shrink - game.zone.timer) * 60);
+                    // O calculo real suave é feito no update(), aqui só verificamos o fim
+                    
+                    if(game.zone.timer >= phase.shrink) {
+                        game.zone.currentRadius = game.zone.targetRadius;
+                        game.zone.phaseIndex++;
+                        if(game.zone.phaseIndex < ZONE_PHASES.length) {
+                            game.zone.state = 'wait';
+                            game.zone.timer = 0;
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateHUD(time, label) {
+            let elBox = document.getElementById('zone-display');
+            let elTime = document.getElementById('zone-timer');
+            let elLabel = document.getElementById('zone-label');
+
+            if(time < 0) time = 0;
+            let m = Math.floor(time/60);
+            let s = time%60;
+            elTime.innerText = `${m}:${s<10?'0'+s:s}`;
+            elLabel.innerText = label;
+
+            if(label === "FECHANDO") elBox.classList.add('closing');
+            else elBox.classList.remove('closing');
+        }
+
+        // --- GAME LOOP ---
+        function update() {
+            if(!game.active) return;
+
+            // 1. ZONA SUAVE
+            if(game.zone.state === 'shrink') {
+                let phase = ZONE_PHASES[game.zone.phaseIndex];
+                let diff = game.zone.currentRadius - game.zone.targetRadius;
+                if(diff > 1) {
+                    game.zone.currentRadius -= diff / (60 * (phase.shrink - game.zone.timer + 1)); 
+                }
+            }
+
+            // 2. PLAYER INPUT
+            let p = game.player;
+            if(!p.dead) {
+                let dx=0, dy=0;
+                if(keys['w']) dy=-1; if(keys['s']) dy=1;
+                if(keys['a']) dx=-1; if(keys['d']) dx=1;
+                
+                if(dx||dy) {
+                    let len = Math.hypot(dx,dy);
+                    p.move((dx/len)*CONFIG.playerSpeed, (dy/len)*CONFIG.playerSpeed);
+                }
+                
+                p.angle = Math.atan2((mouse.y + game.camera.y) - p.y, (mouse.x + game.camera.x) - p.x);
+                if(keys['mousedown']) p.shoot();
+                if(p.attackTimer > 0) p.attackTimer--;
+
+                // Dano de Zona Player
+                if(Math.hypot(p.x - game.zone.x, p.y - game.zone.y) > game.zone.currentRadius) {
+                    p.takeDamage(CONFIG.zoneDamage);
+                }
+            } else {
+                endGame(false);
+            }
+
+            // 3. ENTITIES
+            let aliveCount = 0;
+            game.entities.forEach(e => {
+                if(e.dead) return;
+                aliveCount++;
+                if(e.isBot) {
+                    e.updateAI();
+                    if(e.attackTimer > 0) e.attackTimer--;
+                }
+
+                // Loot
+                for(let i=game.loots.length-1; i>=0; i--) {
+                    let l = game.loots[i];
+                    if(Math.hypot(e.x - l.x, e.y - l.y) < e.radius + l.size) {
+                        if(l.type === 'health') e.hp = Math.min(100, e.hp+50);
+                        else e.equip(l.key);
+                        game.loots.splice(i,1);
+                    }
+                }
+            });
+
+            // 4. BALAS
+            for(let i=game.bullets.length-1; i>=0; i--) {
+                let b = game.bullets[i];
+                b.x += b.vx; b.y += b.vy; b.life--;
+                
+                if(checkWallCollision(b.x, b.y, 2) || b.life <= 0) {
+                    game.bullets.splice(i,1); continue;
+                }
+
+                // Hit
+                for(let e of game.entities) {
+                    if(e === b.owner || e.dead) continue;
+                    if(Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 5) {
+                        e.takeDamage(b.damage);
+                        game.bullets.splice(i,1);
+                        break;
+                    }
+                }
+            }
+
+            // Atualiza Info
+            document.getElementById('alive-count').innerText = aliveCount;
+            document.getElementById('hp-val').innerText = Math.ceil(p.hp);
+            document.getElementById('wep-val').innerText = p.weapon.name;
+            document.getElementById('wep-val').style.color = p.weapon.color;
+            document.getElementById('ammo-val').innerText = p.weapon.ammo === Infinity ? '∞' : p.weapon.ammo;
+
+            if(aliveCount === 1 && !p.dead) endGame(true);
+
+            // Câmera
+            game.camera.x = p.x - canvas.width/2;
+            game.camera.y = p.y - canvas.height/2;
+        }
+
+        function draw() {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-game.camera.x, -game.camera.y);
+
+            // Grade
+            ctx.strokeStyle = '#2c2c2c';
+            ctx.beginPath();
+            for(let i=0; i<=CONFIG.mapSize; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,CONFIG.mapSize); ctx.moveTo(0,i); ctx.lineTo(CONFIG.mapSize,i); }
+            ctx.stroke();
+
+            // Objetos
+            game.loots.forEach(l => {
+                ctx.save();
+                ctx.translate(l.x, l.y);
+                ctx.rotate(l.angle += 0.02);
+                ctx.fillStyle = l.color;
+                ctx.fillRect(-l.size/2, -l.size/2, l.size, l.size);
+                ctx.restore();
+            });
+
+            // Obstáculos
+            ctx.fillStyle = '#444';
+            ctx.strokeStyle = '#111';
+            game.obstacles.forEach(o => {
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+                ctx.strokeRect(o.x, o.y, o.w, o.h);
+                // 3D Fake
+                ctx.fillStyle = '#555'; ctx.fillRect(o.x+10, o.y+10, o.w-20, o.h-20);
+                ctx.fillStyle = '#444';
+            });
+
+            // Entidades
+            game.entities.forEach(e => e.draw(ctx));
+
+            // Balas
+            ctx.fillStyle = '#ffff00';
+            game.bullets.forEach(b => {
+                ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
+            });
+
+            // ZONA
+            ctx.beginPath();
+            ctx.arc(game.zone.x, game.zone.y, game.zone.currentRadius, 0, Math.PI*2);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.stroke();
+            
+            // Gás
+            ctx.beginPath();
+            ctx.arc(game.zone.x, game.zone.y, game.zone.currentRadius + 4000, 0, Math.PI*2);
+            ctx.arc(game.zone.x, game.zone.y, game.zone.currentRadius, 0, Math.PI*2, true);
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            ctx.fill();
+
+            ctx.restore();
+
+            // MINIMAP
+            drawMinimap();
+        }
+
+        function drawMinimap() {
+            miniCtx.fillStyle = '#111';
+            miniCtx.fillRect(0,0,200,200);
+            
+            let scale = 200 / CONFIG.mapSize;
+
+            // Prédios no minimapa
+            miniCtx.fillStyle = '#333';
+            game.obstacles.forEach(o => miniCtx.fillRect(o.x*scale, o.y*scale, o.w*scale, o.h*scale));
+
+            // Zona Atual
+            miniCtx.beginPath();
+            miniCtx.arc(game.zone.x*scale, game.zone.y*scale, game.zone.currentRadius*scale, 0, Math.PI*2);
+            miniCtx.strokeStyle = 'white'; miniCtx.lineWidth=2; miniCtx.stroke();
+            
+            // Próxima Zona (Safe) - Se houver
+            let nextPhase = ZONE_PHASES[game.zone.phaseIndex];
+            if(nextPhase && nextPhase.radius < game.zone.currentRadius) {
+                 miniCtx.beginPath();
+                 miniCtx.arc(game.zone.x*scale, game.zone.y*scale, nextPhase.radius*scale, 0, Math.PI*2);
+                 miniCtx.strokeStyle = 'rgba(255,255,255,0.5)'; miniCtx.lineWidth=1; miniCtx.stroke();
+            }
+
+            // Gás
+            miniCtx.fillStyle = 'rgba(255,0,0,0.3)';
+            miniCtx.beginPath();
+            miniCtx.rect(0,0,200,200);
+            miniCtx.arc(game.zone.x*scale, game.zone.y*scale, game.zone.currentRadius*scale, 0, Math.PI*2, true);
+            miniCtx.fill();
+
+            // Player e Bots
+            game.entities.forEach(e => {
+                if(e.dead) return;
+                miniCtx.fillStyle = e.isBot ? 'red' : '#0f0';
+                let s = e.isBot ? 3 : 5;
+                miniCtx.fillRect(e.x*scale-s/2, e.y*scale-s/2, s, s);
+            });
+        }
+
+        function endGame(win) {
+            game.active = false;
+            document.getElementById('game-over').style.display = 'block';
+            document.getElementById('go-title').innerText = win ? "VITÓRIA!" : "DERROTA";
+            document.getElementById('go-title').style.color = win ? "#f1c40f" : "#e74c3c";
+            document.getElementById('go-msg').innerText = win ? "Você sobreviveu!" : "Tente novamente.";
+        }
+
+        // Input Listeners
+        window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        window.addEventListener('mousedown', () => keys['mousedown'] = true);
+        window.addEventListener('mouseup', () => keys['mousedown'] = false);
+        window.addEventListener('mousemove', e => {mouse.x = e.clientX; mouse.y = e.clientY;});
+
+        function loop() {
+            update();
+            draw();
+            if(game.active) requestAnimationFrame(loop);
+        }
+
+        init();
+    </script>
+</body>
+</html>
