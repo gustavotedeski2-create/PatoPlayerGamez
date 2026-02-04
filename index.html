@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poki 2 | Patinho Games</title>
+    <title>PatoPlayer Games 🦆</title>
     <style>
         :root {
             --primary: #6e3aff;
             --bg: #121212;
             --card-bg: #1e1e1e;
         }
-
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
@@ -18,15 +17,9 @@
             margin: 0;
             padding: 20px;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 { color: var(--primary); font-size: 3rem; }
-
-        /* Grade de Jogos */
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { color: var(--primary); font-size: 3rem; margin: 0; }
+        
         #game-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -34,83 +27,104 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .game-card {
             background: var(--card-bg);
             border-radius: 15px;
             padding: 15px;
             text-align: center;
-            transition: transform 0.3s;
-            cursor: pointer;
             border: 2px solid transparent;
+            transition: transform 0.3s;
         }
-
         .game-card:hover {
-            transform: scale(1.05);
+            transform: translateY(-5px);
             border-color: var(--primary);
         }
-
         .game-card img {
             width: 100%;
+            height: 120px;
+            object-fit: cover;
             border-radius: 10px;
             margin-bottom: 10px;
+            background-color: #000;
         }
-
-        .game-card h3 { margin: 10px 0; font-size: 1.2rem; }
-
         .btn-play {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 8px;
             text-decoration: none;
-            display: inline-block;
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>POKI 2 🦆</h1>
-    <p>Meus jogos hospedados no GitHub</p>
+    <h1>PatoPlayer Games 🎮</h1>
+    <p>O Hub de Jogos do Gustavo</p>
 </header>
 
 <div id="game-grid">
-    <p id="loading">Carregando jogos do GitHub...</p>
+    <p id="loading">Carregando jogos...</p>
 </div>
 
 <script>
-    // CONFIGURAÇÃO: Altere para os seus dados
-    const USER = 'gustavotedeski2-create'; 
-    const REPO = 'PatoPlayerGamez' // Coloque aqui o nome do repo dos jogos
-    const API_URL = `https://api.github.com/repos/gustavo.tedeski2-create/PatoPlayerGamez/contents/games`;
+    // --- DADOS CORRIGIDOS DA PRINT ---
+    const USER = 'gustavotedeski2-create'; // Corrigido (sem o ponto extra)
+    const REPO = 'PatoPlayerGamez';
+    const FOLDER = 'games'; // A pasta onde está o test.html
+
+    // URL da API montada corretamente
+    const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
 
     async function loadGames() {
         try {
+            console.log("Buscando em: " + API_URL);
             const response = await fetch(API_URL);
+            
+            if (!response.ok) throw new Error(`Erro API: ${response.status}`);
+
             const data = await response.json();
             const grid = document.getElementById('game-grid');
             document.getElementById('loading').style.display = 'none';
 
-            // Filtra apenas o que for diretório (cada pasta é um jogo)
-            const folders = data.filter(item => item.type === 'dir');
+            // MUDANÇA IMPORTANTE: 
+            // Agora filtra arquivos que terminam com .html (para pegar o seu test.html)
+            const games = data.filter(item => item.name.endsWith('.html'));
 
-            folders.forEach(folder => {
-                const gameUrl = `https://${USER}.github.io/${REPO}/${folder.name}/index.html`;
+            if (games.length === 0) {
+                grid.innerHTML = '<p>Nenhum jogo encontrado na pasta "games".</p>';
+                return;
+            }
+
+            games.forEach(game => {
+                // Remove o .html do nome para ficar bonito
+                const gameName = game.name.replace('.html', '').replace(/-/g, ' ');
+                
+                // Link direto para o arquivo no GitHub Pages
+                const gameUrl = `https://${USER}.github.io/${REPO}/${FOLDER}/${game.name}`;
                 
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.innerHTML = `
-                    <img src="https://via.placeholder.com/150/6e3aff/ffffff?text=${folder.name}" alt="${folder.name}">
-                    <h3>${folder.name.replace(/-/g, ' ')}</h3>
-                    <a href="${gameUrl}" class="btn-play">Jogar Agora</a>
+                    <img src="https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameName}" alt="${gameName}">
+                    <h3>${gameName}</h3>
+                    <a href="${gameUrl}" class="btn-play">JOGAR AGORA</a>
                 `;
                 grid.appendChild(card);
             });
+
         } catch (error) {
-            console.error('Erro ao carregar jogos:', error);
-            document.getElementById('loading').innerText = 'Erro ao carregar repositório.';
+            console.error(error);
+            document.getElementById('game-grid').innerHTML = 
+                `<p style="color:red; border:1px solid red; padding:10px;">
+                Erro: ${error.message} <br>
+                1. Verifique se o repositório é <strong>PÚBLICO</strong>.<br>
+                2. Verifique se o arquivo <strong>test.html</strong> está dentro da pasta <strong>games</strong>.
+                </p>`;
         }
     }
 
@@ -118,7 +132,4 @@
 </script>
 
 </body>
-
 </html>
-
-
