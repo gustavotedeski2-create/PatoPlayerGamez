@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f5c000; /* Amarelo do fundo */
+            --bg-color: #f5c000;
             --header-text: #fff;
             --card-bg: #ffffff;
             --primary-btn: #6e3aff;
@@ -29,7 +29,7 @@
         header {
             text-align: center;
             padding: 20px;
-            position: relative;
+            margin-top: 10px;
         }
 
         h1 {
@@ -48,23 +48,6 @@
             margin-top: 5px;
         }
 
-        .btn-config {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #7b61ff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #5a42d1;
-            transition: transform 0.1s;
-        }
-
-        .btn-config:active { transform: translateY(4px); box-shadow: none; }
-
         /* --- BANNERS --- */
         .green-banner {
             background-color: var(--green-banner);
@@ -77,6 +60,9 @@
             box-shadow: 0 4px 0 #4cae4c;
         }
 
+        /* Estilo do Link do Chat */
+        .chat-link { text-decoration: none; display: block; }
+        
         .chat-banner {
             background-color: #00b894;
             max-width: 600px;
@@ -84,8 +70,15 @@
             padding: 12px;
             border-radius: 30px;
             text-align: center;
-            cursor: pointer;
+            color: white;
+            font-weight: bold;
             box-shadow: 0 4px 0 #008e72;
+            transition: transform 0.2s;
+        }
+        
+        .chat-banner:hover {
+            transform: scale(1.02);
+            background-color: #00cea5;
         }
 
         /* --- CATEGORIAS (Scroll Horizontal) --- */
@@ -94,7 +87,7 @@
             gap: 10px;
             overflow-x: auto;
             padding: 15px 20px;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; 
         }
         .category-container::-webkit-scrollbar { display: none; }
 
@@ -117,7 +110,7 @@
         }
 
         .tag.blue { background: #54a0ff; border-color: #54a0ff; }
-        .tag.red { background: #ff6b6b; border-color: #ff6b6b; }
+        .tag.red { background: #ff6b6b; border-color: #ff6b6b; } /* Cor do botão NOVOS! */
 
         /* --- SOBRE O SITE --- */
         .about-btn-container { text-align: center; margin: 15px 0; }
@@ -161,7 +154,7 @@
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             color: #333;
-            display: flex; /* Começa visível */
+            display: flex; 
             flex-direction: column;
         }
 
@@ -204,20 +197,19 @@
 </head>
 <body>
 
-    <button class="btn-config"><i class="fas fa-cog"></i> Configurações</button>
-
     <header>
         <h1><i class="fas fa-gamepad"></i> PatoPlayer Games</h1>
         <div class="subtitle">Seus jogos favoritos em um só lugar</div>
     </header>
 
     <div class="green-banner">
-        <i class="fas fa-gamepad"></i> Seja Bem-vindo ao PatoPlayer! Aqui temos <span id="game-count">0</span> jogos disponíveis + 1 HUB especial pra você jogar!
+        <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis + 1 HUB especial pra você!
     </div>
 
     <div class="category-container">
         <button class="tag blue active" onclick="filterGames('todos', this)">Todos</button>
-        <button class="tag red" onclick="filterGames('atualizados', this)"><i class="fas fa-exclamation-triangle"></i> Atualizados</button>
+        <button class="tag red" onclick="filterGames('novos', this)"><i class="fas fa-star"></i> NOVOS!</button>
+        
         <button class="tag" onclick="filterGames('puzzle', this)">Puzzle</button>
         <button class="tag" onclick="filterGames('aventura', this)">Aventura</button>
         <button class="tag" onclick="filterGames('acao', this)">Ação</button>
@@ -230,16 +222,18 @@
         <button class="btn-about"><i class="fas fa-info-circle"></i> Sobre O Site</button>
     </div>
 
-    <div class="chat-banner">
-        <i class="fas fa-comment-dots"></i> Experimente falar com o povo diretamente do nosso chat online!
-    </div>
+    <a href="https://cadeaçãoplay.my.canva.site/whatsapp-online" target="_blank" class="chat-link">
+        <div class="chat-banner">
+            <i class="fas fa-comment-dots"></i> Fale com a gente no Chat Online!
+        </div>
+    </a>
 
     <div class="section-title">
         <i class="fas fa-gamepad"></i> Todos os Jogos
     </div>
 
     <div id="game-grid">
-        <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">Carregando jogos...</p>
+        <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">Buscando jogos novos no GitHub...</p>
     </div>
 
 <script>
@@ -249,11 +243,11 @@
     const FOLDER = 'games';
 
     // --- SISTEMA DE CATEGORIAS ---
-    // Coloque aqui o nome do arquivo e a categoria dele.
-    // Exemplo: 'snake.html': 'puzzle'
+    // Defina aqui a categoria de cada jogo.
+    // Dica: Para um jogo aparecer na aba "NOVOS!", você pode categorizá-lo como 'novos' aqui.
     const manualCategories = {
         'test.html': 'acao',
-        'snake.html': 'puzzle',
+        'snake.html': 'novos', // Exemplo: Snake aparecerá na aba NOVOS!
         'mario.html': 'aventura'
     };
 
@@ -271,7 +265,7 @@
             // Filtra apenas arquivos .html
             const games = data.filter(item => item.name.endsWith('.html'));
 
-            // Atualiza o contador lá em cima no banner verde
+            // Atualiza o contador lá em cima automaticamente
             document.getElementById('game-count').innerText = games.length;
 
             games.forEach(game => {
@@ -279,18 +273,17 @@
                 const gameDisplayName = gameName.replace(/-/g, ' ');
                 const gameUrl = `https://${USER}.github.io/${REPO}/${FOLDER}/${game.name}`;
                 
-                // Define categoria: Se estiver na lista manual usa ela, senão usa 'outros'
+                // Define categoria
                 let category = manualCategories[game.name] || 'outros';
 
                 const card = document.createElement('div');
                 card.className = 'game-card';
-                // Adiciona o atributo data-category para o filtro funcionar
                 card.setAttribute('data-category', category); 
                 
                 card.innerHTML = `
                     <img src="https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}" alt="${gameName}">
                     <h3>${gameDisplayName}</h3>
-                    <div class="game-category-label">${category}</div>
+                    <div class="game-category-label">${category === 'novos' ? '⭐ NOVO!' : category}</div>
                     <a href="${gameUrl}" class="btn-play">JOGAR</a>
                 `;
                 grid.appendChild(card);
@@ -304,22 +297,22 @@
 
     // --- FUNÇÃO DE FILTRO ---
     function filterGames(category, btnElement) {
-        // 1. Muda a cor do botão ativo
+        // Atualiza botão ativo
         document.querySelectorAll('.tag').forEach(btn => btn.classList.remove('active'));
         btnElement.classList.add('active');
 
-        // 2. Filtra os cards
         const cards = document.querySelectorAll('.game-card');
         
         cards.forEach(card => {
             const gameCat = card.getAttribute('data-category');
             
-            if (category === 'todos' || category === 'atualizados') {
-                card.style.display = 'flex'; // Mostra tudo
+            // Lógica do filtro
+            if (category === 'todos') {
+                card.style.display = 'flex';
             } else if (gameCat === category) {
-                card.style.display = 'flex'; // Mostra se bater a categoria
+                card.style.display = 'flex';
             } else {
-                card.style.display = 'none'; // Esconde o resto
+                card.style.display = 'none';
             }
         });
     }
