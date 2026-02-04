@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duck Clicker 🦆</title>
+    <style>
+        :root {
+            --bg-color: #1a1b26; /* Estilo dark meio Linux */
+            --text-color: #a9b1d6;
+            --accent-color: #ff9e64; /* Laranja pato */
+            --secondary: #24283b;
+            --btn-hover: #414868;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Área Esquerda: O Pato */
+        .click-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid var(--secondary);
+            position: relative;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #fff;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        #score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            display: block;
+            margin: 10px 0;
+        }
+
+        .per-second {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        #duck-btn {
+            font-size: 8rem;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            cursor: pointer;
+            filter: drop-shadow(0 0 15px rgba(255, 158, 100, 0.3));
+        }
+
+        #duck-btn:active {
+            transform: scale(0.9);
+        }
+
+        #duck-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Área Direita: Loja */
+        .upgrade-zone {
+            width: 400px;
+            background-color: var(--secondary);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .shop-header {
+            text-align: center;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .upgrade-item {
+            background-color: var(--bg-color);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+
+        .upgrade-item:hover {
+            background-color: var(--btn-hover);
+            transform: translateX(-5px);
+        }
+
+        .upgrade-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .upgrade-info h3 {
+            margin: 0 0 5px 0;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .upgrade-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+        }
+
+        .upgrade-cost {
+            font-weight: bold;
+            background: #111;
+            padding: 5px 10px;
+            border-radius: 5px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Animação de clique (+1) */
+        .click-effect {
+            position: absolute;
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            font-size: 1.5rem;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .reset-btn {
+            margin-top: auto;
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="click-zone">
+        <div class="stats">
+            <h1>Império dos Patos</h1>
+            <span id="score">0</span> Patos
+            <div class="per-second"><span id="gps">0</span> patos/segundo</div>
+        </div>
+        
+        <div id="duck-btn" onclick="clickDuck(event)">🦆</div>
+    </div>
+
+    <div class="upgrade-zone">
+        <div class="shop-header">Loja de Evolução</div>
+        <div id="upgrades-container">
+            </div>
+        
+        <button class="reset-btn" onclick="hardReset()">Reiniciar Progresso</button>
+    </div>
+
+    <script>
+        // --- Configuração do Jogo ---
+        let gameData = {
+            patos: 0,
+            patosPorSegundo: 0,
+            patosPorClique: 1,
+            upgrades: [
+                { id: 1, name: "Patinho de Borracha", cost: 15, gps: 0.5, count: 0, icon: "🛁" },
+                { id: 2, name: "Lagoa de Quintal", cost: 100, gps: 2, count: 0, icon: "💧" },
+                { id: 3, name: "Recrutador de Patos", cost: 500, gps: 8, count: 0, icon: "📢" },
+                { id: 4, name: "Fábrica de Ração", cost: 2000, gps: 25, count: 0, icon: "🏭" },
+                { id: 5, name: "Base Lunar Pato", cost: 10000, gps: 100, count: 0, icon: "🚀" },
+                { id: 6, name: "Imperador Supremo", cost: 50000, gps: 400, count: 0, icon: "👑" }
+            ]
+        };
+
+        // --- Carregar Save ---
+        const savedGame = localStorage.getItem('duckClickerSave');
+        if (savedGame) {
+            const parsed = JSON.parse(savedGame);
+            // Mescla os dados salvos com a estrutura atual (previne erros se adicionar novos upgrades)
+            gameData.patos = parsed.patos || 0;
+            
+            // Restaura a contagem dos upgrades
+            parsed.upgrades.forEach((savedUp, index) => {
+                if(gameData.upgrades[index]) {
+                    gameData.upgrades[index].count = savedUp.count;
+                    gameData.upgrades[index].cost = savedUp.cost;
+                }
+            });
+            recalcGPS();
+        }
+
+        // --- Elementos DOM ---
+        const scoreEl = document.getElementById('score');
+        const gpsEl = document.getElementById('gps');
+        const shopContainer = document.getElementById('upgrades-container');
+
+        // --- Core ---
+        function updateUI() {
+            scoreEl.innerText = Math.floor(gameData.patos).toLocaleString();
+            gpsEl.innerText = gameData.patosPorSegundo.toFixed(1);
+            
+            // Atualiza botões da loja
+            gameData.upgrades.forEach(up => {
+                const btn = document.getElementById(`btn-${up.id}`);
+                const costEl = document.getElementById(`cost-${up.id}`);
+                const countEl = document.getElementById(`count-${up.id}`);
+                
+                if (btn) {
+                    costEl.innerText = Math.floor(up.cost);
+                    countEl.innerText = up.count;
+                    
+                    if (gameData.patos >= up.cost) {
+                        btn.classList.remove('disabled');
+                    } else {
+                        btn.classList.add('disabled');
+                    }
+                }
+            });
+        }
+
+        function recalcGPS() {
+            let totalGPS = 0;
+            gameData.upgrades.forEach(up => {
+                totalGPS += (up.gps * up.count);
+            });
+            gameData.patosPorSegundo = totalGPS;
+        }
+
+        function clickDuck(event) {
+            gameData.patos += gameData.patosPorClique;
+            
+            // Efeito visual
+            const floatText = document.createElement('div');
+            floatText.classList.add('click-effect');
+            floatText.innerText = `+${gameData.patosPorClique}`;
+            floatText.style.left = `${event.clientX}px`;
+            floatText.style.top = `${event.clientY}px`;
+            document.body.appendChild(floatText);
+            
+            setTimeout(() => floatText.remove(), 1000);
+            updateUI();
+        }
+
+        function buyUpgrade(index) {
+            const up = gameData.upgrades[index];
+            if (gameData.patos >= up.cost) {
+                gameData.patos -= up.cost;
+                up.count++;
+                up.cost = Math.ceil(up.cost * 1.15); // Aumenta custo em 15%
+                recalcGPS();
+                updateUI();
+                saveGame();
+            }
+        }
+
+        // --- Renderizar Loja ---
+        function renderShop() {
+            shopContainer.innerHTML = "";
+            gameData.upgrades.forEach((up, index) => {
+                const item = document.createElement('div');
+                item.className = 'upgrade-item disabled';
+                item.id = `btn-${up.id}`;
+                item.onclick = () => buyUpgrade(index);
+                
+                item.innerHTML = `
+                    <div style="font-size: 2rem; margin-right: 15px;">${up.icon}</div>
+                    <div class="upgrade-info" style="flex: 1;">
+                        <h3>${up.name}</h3>
+                        <p>+${up.gps} p/s • Possui: <span id="count-${up.id}">0</span></p>
+                    </div>
+                    <div class="upgrade-cost" id="cost-${up.id}">${up.cost}</div>
+                `;
+                shopContainer.appendChild(item);
+            });
+        }
+
+        function saveGame() {
+            localStorage.setItem('duckClickerSave', JSON.stringify(gameData));
+        }
+
+        function hardReset() {
+            if(confirm("Tem certeza que quer deletar todo o império dos patos?")) {
+                localStorage.removeItem('duckClickerSave');
+                location.reload();
+            }
+        }
+
+        // --- Loop Principal ---
+        setInterval(() => {
+            if (gameData.patosPorSegundo > 0) {
+                gameData.patos += (gameData.patosPorSegundo / 10); // Executa 10x por segundo para suavidade
+                updateUI();
+            }
+        }, 100);
+
+        setInterval(saveGame, 5000); // Salva a cada 5s
+
+        // Inicialização
+        renderShop();
+        updateUI();
+
+    </script>
+</body>
+</html>

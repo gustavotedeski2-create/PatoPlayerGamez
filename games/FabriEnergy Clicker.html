@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FabriEnergy Clicker</title>
+    <style>
+        :root {
+            --primary: #ffd700;
+            --bg: #1a1a1a;
+            --panel: #2d2d2d;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Área do Clicker (Esquerda) */
+        .click-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid #333;
+            position: relative;
+        }
+
+        .energy-display {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .per-second {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        #main-btn {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffe066 0%, #b39b00 100%);
+            border: 5px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            user-select: none;
+        }
+
+        #main-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Efeito de partícula */
+        .particle {
+            position: absolute;
+            color: var(--primary);
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* Área de Upgrades (Direita) */
+        .upgrade-zone {
+            width: 400px;
+            background-color: var(--panel);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+
+        h2 { border-bottom: 1px solid #555; padding-bottom: 10px; }
+
+        .upgrade-item {
+            background: #3d3d3d;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .upgrade-item:hover { background: #4a4a4a; }
+        .upgrade-item.disabled { opacity: 0.5; cursor: not-allowed; }
+        .upgrade-item:active:not(.disabled) { transform: translateY(2px); }
+
+        .info h3 { margin: 0 0 5px 0; font-size: 1.1em; }
+        .info p { margin: 0; font-size: 0.9em; color: #ccc; }
+        
+        .cost {
+            font-weight: bold;
+            color: var(--primary);
+            text-align: right;
+        }
+        .cost span { display: block; font-size: 0.8em; color: #fff; }
+
+    </style>
+</head>
+<body>
+
+    <div class="click-zone">
+        <div class="energy-display"><span id="score">0</span> Watts</div>
+        <div class="per-second"><span id="gps">0</span> por segundo</div>
+        
+        <div id="main-btn">⚡</div>
+    </div>
+
+    <div class="upgrade-zone">
+        <h2>Loja de Upgrades</h2>
+
+        <div class="upgrade-item" id="upg-click" onclick="buyUpgrade('click')">
+            <div class="info">
+                <h3>Gerador Manual</h3>
+                <p>+1 por clique</p>
+            </div>
+            <div class="cost">
+                <div id="cost-click">15</div>
+                <span>Watts</span>
+            </div>
+        </div>
+
+        <div class="upgrade-item" id="upg-auto" onclick="buyUpgrade('auto')">
+            <div class="info">
+                <h3>Bateria Automática</h3>
+                <p>+5 por segundo</p>
+            </div>
+            <div class="cost">
+                <div id="cost-auto">100</div>
+                <span>Watts</span>
+            </div>
+        </div>
+
+        <div class="upgrade-item" id="upg-mult" onclick="buyUpgrade('mult')">
+            <div class="info">
+                <h3>Sobrecarga</h3>
+                <p>Multiplica tudo x1.2</p>
+            </div>
+            <div class="cost">
+                <div id="cost-mult">500</div>
+                <span>Watts</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis do Jogo
+        let game = {
+            score: 0,
+            clickValue: 1,
+            autoRate: 0,
+            multiplier: 1.0,
+            
+            // Custos e Níveis
+            costs: {
+                click: 15,
+                auto: 100,
+                mult: 500
+            },
+            levels: {
+                click: 0,
+                auto: 0,
+                mult: 0
+            }
+        };
+
+        // Elementos DOM
+        const elScore = document.getElementById('score');
+        const elGps = document.getElementById('gps');
+        const btn = document.getElementById('main-btn');
+
+        // Função de Clicar
+        btn.addEventListener('click', (e) => {
+            const gain = game.clickValue * game.multiplier;
+            addScore(gain);
+            spawnParticle(e.clientX, e.clientY, `+${gain.toFixed(1)}`);
+        });
+
+        function addScore(amount) {
+            game.score += amount;
+            updateUI();
+        }
+
+        // Loop Automático (1 segundo)
+        setInterval(() => {
+            if (game.autoRate > 0) {
+                const gain = game.autoRate * game.multiplier;
+                addScore(gain);
+            }
+        }, 1000);
+
+        // Sistema de Compra
+        function buyUpgrade(type) {
+            const cost = game.costs[type];
+
+            if (game.score >= cost) {
+                game.score -= cost;
+                game.levels[type]++;
+
+                // Efeitos dos Upgrades
+                if (type === 'click') {
+                    game.clickValue += 1; // Aumenta clique base
+                    game.costs.click = Math.floor(game.costs.click * 1.5); // Custo sobe 50%
+                } 
+                else if (type === 'auto') {
+                    game.autoRate += 5; // Aumenta auto base
+                    game.costs.auto = Math.floor(game.costs.auto * 1.4); // Custo sobe 40%
+                } 
+                else if (type === 'mult') {
+                    game.multiplier *= 1.2; // Multiplica tudo
+                    game.costs.mult = Math.floor(game.costs.mult * 2.0); // Custo dobra
+                }
+
+                updateUI();
+            }
+        }
+
+        // Atualiza a Interface e Botões
+        function updateUI() {
+            // Formatar números (sem casas decimais)
+            elScore.innerText = Math.floor(game.score).toLocaleString();
+            
+            const realGps = game.autoRate * game.multiplier;
+            elGps.innerText = realGps.toFixed(1);
+
+            // Atualizar preços na tela
+            document.getElementById('cost-click').innerText = game.costs.click;
+            document.getElementById('cost-auto').innerText = game.costs.auto;
+            document.getElementById('cost-mult').innerText = game.costs.mult;
+
+            // Desabilitar botões se não tiver dinheiro (visual)
+            checkButton('upg-click', game.costs.click);
+            checkButton('upg-auto', game.costs.auto);
+            checkButton('upg-mult', game.costs.mult);
+        }
+
+        function checkButton(id, cost) {
+            const el = document.getElementById(id);
+            if (game.score < cost) {
+                el.classList.add('disabled');
+            } else {
+                el.classList.remove('disabled');
+            }
+        }
+
+        // Efeito Visual de Partícula
+        function spawnParticle(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'particle';
+            el.innerText = text;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        // Início
+        updateUI();
+
+    </script>
+</body>
+</html>

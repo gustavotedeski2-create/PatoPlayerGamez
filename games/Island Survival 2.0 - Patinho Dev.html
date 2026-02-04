@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Island Survival 2.0 - Patinho Dev</title>
+    <style>
+        :root {
+            --day-sky: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            --night-sky: linear-gradient(to bottom, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --sunset-sky: linear-gradient(to bottom, #fdc830 0%, #f37335 100%);
+        }
+
+        body {
+            font-family: 'Consolas', 'Courier New', monospace; /* Fonte mais "dev" */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            transition: background 3s ease; /* Transição suave do céu */
+            background: var(--day-sky);
+            overflow: hidden;
+        }
+
+        /* --- Interface Principal --- */
+        #game-layout {
+            display: grid;
+            grid-template-columns: 250px 400px 250px;
+            gap: 20px;
+            max-width: 1000px;
+            width: 95%;
+        }
+
+        .panel {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h2 { margin-top: 0; border-bottom: 1px solid #555; padding-bottom: 5px; font-size: 1.2rem; }
+
+        /* --- Barras de Status --- */
+        .stat-row { margin-bottom: 10px; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px; }
+        .progress-bar {
+            background: #333;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill { height: 100%; width: 100%; transition: width 0.5s, background-color 0.5s; }
+        
+        /* Cores das barras */
+        #bar-food { background-color: #e67e22; }
+        #bar-water { background-color: #3498db; }
+        #bar-energy { background-color: #f1c40f; }
+        #bar-health { background-color: #e74c3c; }
+
+        /* --- Ações e Log --- */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            background: #34495e;
+            color: #ecf0f1;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover { background: #4b6584; transform: translateY(-2px); }
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #log {
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            color: #bdc3c7;
+            border-top: 1px solid #555;
+            margin-top: 15px;
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column-reverse; /* Mensagens novas no topo/fundo visual */
+        }
+        .log-entry { margin-bottom: 5px; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-event { color: #f1c40f; }
+        .log-danger { color: #e74c3c; }
+        .log-craft { color: #2ecc71; }
+
+        /* --- Inventário e Crafting --- */
+        #inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 colunas */
+            gap: 5px;
+        }
+        .inv-slot {
+            background: rgba(255,255,255,0.1);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 1.2em;
+            position: relative;
+            cursor: help;
+        }
+        .inv-count {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+        
+        #crafting-list { display: flex; flex-direction: column; gap: 5px; }
+        .craft-btn { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 0.8em; 
+            background: #2c3e50; 
+        }
+
+        /* --- Feedback de Tempo --- */
+        #time-display {
+            position: absolute;
+            top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        
+        .moon-icon { display: none; }
+        .sun-icon { display: inline; }
+        
+        body.night .moon-icon { display: inline; }
+        body.night .sun-icon { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div id="time-display">
+        <span class="sun-icon">☀️</span><span class="moon-icon">🌙</span> 
+        Dia <span id="day-count">1</span> - <span id="clock">08:00</span>
+    </div>
+
+    <div id="game-layout">
+        
+        <div class="panel">
+            <h2>📊 Status</h2>
+            <div class="stat-row">
+                <div class="stat-label"><span>Saúde</span><span id="val-health">100%</span></div>
+                <div class="progress-bar"><div id="bar-health" class="progress-fill"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>Energia</span><span id="val-energy">100%</span></div>
+                <div class="progress-bar"><div id="bar-energy" class="progress-fill"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>Fome</span><span id="val-food">100%</span></div>
+                <div class="progress-bar"><div id="bar-food" class="progress-fill"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>Sede</span><span id="val-water">100%</span></div>
+                <div class="progress-bar"><div id="bar-water" class="progress-fill"></div></div>
+            </div>
+            <hr>
+            <div style="font-size: 0.8em; text-align: center; opacity: 0.7;">
+                Dica: Construa um Abrigo para dormir melhor.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🎮 Ações</h2>
+            <div class="btn-grid">
+                <button onclick="Game.action('scavenge')">🔍 Explorar (30m)</button>
+                <button onclick="Game.action('chop')">🪓 Cortar Lenha (1h)</button>
+                <button onclick="Game.action('mine')">⛏️ Minerar (1h)</button>
+                <button onclick="Game.action('fish')">🎣 Pescar (1h)</button>
+                <button onclick="Game.action('rest_short')" style="grid-column: span 2;">💤 Cochilo (2h)</button>
+                <button onclick="Game.action('sleep')" style="grid-column: span 2; background: #8e44ad;">🛌 Dormir (8h)</button>
+            </div>
+            
+            <div id="log">
+                <div class="log-entry"> > Iniciando sistema de sobrevivência...</div>
+                <div class="log-entry"> > Bem-vindo à ilha, Patinho!</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🎒 Mochila</h2>
+            <div id="inventory-grid">
+                </div>
+
+            <h2 style="margin-top: 20px;">🔨 Construção</h2>
+            <div id="crafting-list">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        const Game = {
+            state: {
+                day: 1,
+                hour: 8, // 0-23
+                stats: { health: 100, energy: 100, food: 100, water: 100 },
+                inventory: {},
+                flags: { hasShelter: false, hasFire: false }
+            },
+            
+            // Definição dos Itens
+            items: {
+                'wood': { icon: '🪵', name: 'Madeira' },
+                'stone': { icon: '🪨', name: 'Pedra' },
+                'berries': { icon: '🫐', name: 'Frutas' },
+                'fish': { icon: '🐟', name: 'Peixe' },
+                'plastic': { icon: '🥤', name: 'Plástico' }, // Lixo do oceano
+                'scrap': { icon: '⚙️', name: 'Sucata' },
+                'axe': { icon: '🪓', name: 'Machado' },
+                'spear': { icon: '🔱', name: 'Lança' },
+                'server': { icon: '📠', name: 'Servidor Quebrado' } // Easter egg
+            },
+
+            // Receitas de Crafting
+            recipes: [
+                { id: 'axe', name: 'Machado Improvisado', cost: { 'wood': 3, 'stone': 2 } },
+                { id: 'spear', name: 'Lança de Pesca', cost: { 'wood': 4, 'scrap': 1 } },
+                { id: 'shelter', name: 'Abrigo Linux (Tenda)', cost: { 'wood': 10, 'plastic': 5 } },
+                { id: 'campfire', name: 'Fogueira', cost: { 'wood': 5, 'stone': 3 } }
+            ],
+
+            init() {
+                this.updateUI();
+                this.renderCrafting();
+                
+                // Game Loop (Relógio do mundo)
+                setInterval(() => {
+                    // Pequena perda passiva de status a cada tick real (opcional)
+                }, 1000);
+            },
+
+            // --- Lógica de Tempo e Clima ---
+            passTime(hours) {
+                this.state.hour += hours;
+                
+                // Consumo de recursos por hora passada
+                const drain = hours * 2; 
+                this.state.stats.food -= drain;
+                this.state.stats.water -= drain * 1.5;
+                this.state.stats.energy -= drain * 0.5;
+
+                if (this.state.hour >= 24) {
+                    this.state.hour -= 24;
+                    this.state.day++;
+                    this.log("Um novo dia nasce na ilha.", "log-event");
+                }
+
+                // Efeitos visuais do dia/noite
+                const body = document.body;
+                if (this.state.hour >= 18 || this.state.hour < 6) {
+                    body.style.background = "var(--night-sky)";
+                    body.classList.add('night');
+                } else if (this.state.hour >= 16 && this.state.hour < 18) {
+                    body.style.background = "var(--sunset-sky)";
+                    body.classList.remove('night');
+                } else {
+                    body.style.background = "var(--day-sky)";
+                    body.classList.remove('night');
+                }
+
+                this.checkEvents();
+                this.checkGameOver();
+                this.updateUI();
+            },
+
+            // --- Sistema de Ações ---
+            action(type) {
+                if (this.state.stats.energy <= 0 && type !== 'sleep') {
+                    this.log("Você está exausto demais! Precisa dormir.", "log-danger");
+                    return;
+                }
+
+                let loot = null;
+                
+                switch(type) {
+                    case 'scavenge': // Explorar
+                        this.passTime(0.5);
+                        this.state.stats.energy -= 5;
+                        // Chance de achar coisas aleatórias
+                        const rand = Math.random();
+                        if (rand < 0.4) loot = { 'wood': 1 };
+                        else if (rand < 0.7) loot = { 'berries': 2 };
+                        else if (rand < 0.9) loot = { 'stone': 1 };
+                        else loot = { 'plastic': 1 };
+                        
+                        // Easter Egg
+                        if (Math.random() < 0.05) {
+                            loot = { 'server': 1 };
+                            this.log("Você achou um servidor velho na areia?!", "log-event");
+                        }
+                        break;
+
+                    case 'chop': // Cortar Lenha
+                        if (!this.hasItem('axe')) {
+                            this.log("Você precisa de um Machado para isso ser eficiente.", "log-danger");
+                            this.passTime(1);
+                            this.state.stats.energy -= 15;
+                            if (Math.random() > 0.5) loot = { 'wood': 1 };
+                        } else {
+                            this.passTime(1);
+                            this.state.stats.energy -= 10;
+                            loot = { 'wood': 3 }; // Com machado rende mais
+                        }
+                        break;
+
+                    case 'mine': // Minerar
+                         this.passTime(1);
+                         this.state.stats.energy -= 20;
+                         loot = { 'stone': 2, 'scrap': 1 };
+                         break;
+                    
+                    case 'fish': // Pescar
+                        this.passTime(1);
+                        if (!this.hasItem('spear')) {
+                            this.log("Tentar pegar peixe com a mão é difícil...", "log-danger");
+                            if (Math.random() < 0.2) loot = { 'fish': 1 };
+                        } else {
+                            this.state.stats.energy -= 10;
+                            if (Math.random() < 0.7) loot = { 'fish': 2 };
+                        }
+                        break;
+
+                    case 'rest_short':
+                        this.passTime(2);
+                        this.state.stats.energy += 20;
+                        this.log("Você cochilou na sombra.");
+                        break;
+
+                    case 'sleep':
+                        this.passTime(8);
+                        let recovery = 60;
+                        if (this.state.flags.hasShelter) recovery = 100; // Dorme melhor no abrigo
+                        this.state.stats.energy = Math.min(100, this.state.stats.energy + recovery);
+                        this.log(this.state.flags.hasShelter ? "Dormiu confortável na tenda." : "Dormiu no chão frio (recuperou menos energia).");
+                        break;
+                }
+
+                if (loot) {
+                    for (let [item, qty] of Object.entries(loot)) {
+                        this.addItem(item, qty);
+                        this.log(`Você obteve: +${qty} ${this.items[item].name}`);
+                    }
+                    // Comer automaticamente se achar comida (simplificação)
+                    if (loot.berries) { this.state.stats.food += 5; this.state.stats.water += 2; }
+                    if (loot.fish) { this.state.stats.food += 15; }
+                }
+            },
+
+            // --- Sistema de Inventário e Crafting ---
+            addItem(id, qty) {
+                if (!this.state.inventory[id]) this.state.inventory[id] = 0;
+                this.state.inventory[id] += qty;
+                this.renderInventory();
+                this.renderCrafting(); // Atualiza botões
+            },
+            
+            hasItem(id) {
+                return this.state.inventory[id] && this.state.inventory[id] > 0;
+            },
+
+            craft(recipeId) {
+                const recipe = this.recipes.find(r => r.id === recipeId);
+                // Verificar custo
+                for (let [item, qty] of Object.entries(recipe.cost)) {
+                    if (!this.state.inventory[item] || this.state.inventory[item] < qty) {
+                        this.log(`Faltam recursos para: ${recipe.name}`, "log-danger");
+                        return;
+                    }
+                }
+                // Deduzir custo
+                for (let [item, qty] of Object.entries(recipe.cost)) {
+                    this.state.inventory[item] -= qty;
+                    if (this.state.inventory[item] <= 0) delete this.state.inventory[item];
+                }
+                
+                // Efeitos especiais de crafting
+                if (recipeId === 'shelter') {
+                    this.state.flags.hasShelter = true;
+                    this.log("Abrigo construído! Agora você recupera mais energia ao dormir.", "log-craft");
+                } else if (recipeId === 'campfire') {
+                    this.state.flags.hasFire = true;
+                    this.log("Fogueira criada! Animais selvagens se afastam.", "log-craft");
+                } else {
+                    this.addItem(recipeId, 1);
+                    this.log(`Item criado: ${recipe.name}`, "log-craft");
+                }
+                
+                this.renderInventory();
+                this.renderCrafting();
+            },
+
+            // --- Eventos Aleatórios ---
+            checkEvents() {
+                if (Math.random() < 0.1) { // 10% de chance a cada ação
+                    const events = [
+                        { msg: "Uma tempestade tropical atingiu a ilha! (-10 Energia)", effect: () => this.state.stats.energy -= 10 },
+                        { msg: "Você achou um pinguim perdido! Ele te deu sorte. (+10 Saúde)", effect: () => this.state.stats.health += 10 },
+                        { msg: "Mosquitos atacaram durante a noite. (-5 Saúde)", effect: () => this.state.stats.health -= 5 },
+                        { msg: "Você lembrou de como configurar um servidor Linux. Sentiu-se inteligente. (+5 Energia)", effect: () => this.state.stats.energy += 5 }
+                    ];
+                    const evt = events[Math.floor(Math.random() * events.length)];
+                    this.log(evt.msg, "log-event");
+                    evt.effect();
+                }
+            },
+
+            checkGameOver() {
+                // Limites
+                if (this.state.stats.food > 100) this.state.stats.food = 100;
+                if (this.state.stats.water > 100) this.state.stats.water = 100;
+                
+                // Dano por falta de recursos
+                if (this.state.stats.food <= 0 || this.state.stats.water <= 0) {
+                    this.state.stats.health -= 5;
+                    this.log("Você está morrendo de fome ou sede!", "log-danger");
+                }
+
+                if (this.state.stats.health <= 0) {
+                    alert(`GAME OVER\nVocê sobreviveu por ${this.state.day} dias.\nCausa da morte: Falência múltipla de órgãos.`);
+                    location.reload();
+                }
+            },
+
+            // --- Renderização (Visual) ---
+            log(msg, className = "") {
+                const div = document.createElement('div');
+                div.className = `log-entry ${className}`;
+                div.innerText = `[Dia ${this.state.day} ${this.state.hour}:00] ${msg}`;
+                document.getElementById('log').prepend(div);
+            },
+
+            updateUI() {
+                // Atualiza Texto do Tempo
+                document.getElementById('day-count').innerText = this.state.day;
+                document.getElementById('clock').innerText = `${this.state.hour.toString().padStart(2, '0')}:00`;
+
+                // Atualiza Barras
+                this.setBar('food', this.state.stats.food);
+                this.setBar('water', this.state.stats.water);
+                this.setBar('energy', this.state.stats.energy);
+                this.setBar('health', this.state.stats.health);
+            },
+
+            setBar(id, val) {
+                const el = document.getElementById(`bar-${id}`);
+                const txt = document.getElementById(`val-${id}`);
+                val = Math.max(0, Math.floor(val));
+                el.style.width = `${val}%`;
+                txt.innerText = `${val}%`;
+            },
+
+            renderInventory() {
+                const grid = document.getElementById('inventory-grid');
+                grid.innerHTML = '';
+                for (let [id, qty] of Object.entries(this.state.inventory)) {
+                    if (qty > 0 && this.items[id]) { // Verifica se item existe na DB
+                        const div = document.createElement('div');
+                        div.className = 'inv-slot';
+                        div.title = this.items[id].name;
+                        div.innerHTML = `${this.items[id].icon}<span class="inv-count">${qty}</span>`;
+                        grid.appendChild(div);
+                    }
+                }
+            },
+
+            renderCrafting() {
+                const list = document.getElementById('crafting-list');
+                list.innerHTML = '';
+                
+                // Filtra receitas que já foram feitas e são únicas (ex: Abrigo)
+                this.recipes.forEach(recipe => {
+                    if (recipe.id === 'shelter' && this.state.flags.hasShelter) return;
+                    if (recipe.id === 'campfire' && this.state.flags.hasFire) return;
+
+                    const btn = document.createElement('button');
+                    btn.className = 'craft-btn';
+                    
+                    // Monta string de custo (ex: 3 Madeira, 2 Pedra)
+                    let costStr = Object.entries(recipe.cost)
+                        .map(([id, q]) => `${q} ${this.items[id].icon}`)
+                        .join(' ');
+
+                    btn.innerHTML = `<span>${recipe.name}</span> <span>${costStr}</span>`;
+                    btn.onclick = () => this.craft(recipe.id);
+                    list.appendChild(btn);
+                });
+            }
+        };
+
+        Game.init();
+    </script>
+</body>
+</html>

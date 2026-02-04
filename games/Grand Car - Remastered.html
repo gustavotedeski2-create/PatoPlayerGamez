@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Car: Remastered</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; font-family: 'Arial', sans-serif; }
+        #gameContainer { position: relative; width: 450px; height: 100vh; margin: 0 auto; background: #333; overflow: hidden; box-shadow: 0 0 30px #000; border-left: 5px solid #555; border-right: 5px solid #555;}
+        canvas { display: block; }
+        
+        /* UI Overlay */
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; color: white; text-shadow: 1px 1px 2px black; pointer-events: none; z-index: 10; font-weight: bold;}
+        .hud-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        
+        /* Barra de Vida do Carro */
+        #healthBarContainer { width: 100%; height: 10px; background: #444; border: 1px solid #fff; display: none; margin-top: 5px; border-radius: 4px; overflow: hidden;}
+        #healthBar { width: 100%; height: 100%; background: #2ecc71; transition: width 0.2s, background 0.2s; }
+
+        /* Telas */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 20; text-align: center;}
+        button { padding: 15px 30px; font-size: 18px; background: #e67e22; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 20px; transition: transform 0.1s;}
+        button:hover { transform: scale(1.05); background: #d35400; }
+        h1 { margin: 0 0 10px 0; font-size: 40px; color: #f1c40f; text-transform: uppercase; letter-spacing: 2px; }
+        .hidden { display: none !important; }
+        
+        .tutorial { font-size: 14px; color: #aaa; margin-top: 10px; line-height: 1.5; }
+        b { color: #fff; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="ui">
+        <div class="hud-row">
+            <span>SCORE: <span id="scoreVal">0</span></span>
+            <span>VEL: <span id="speedVal">0</span> km/h</span>
+        </div>
+        <div id="healthBarContainer">
+            <div id="healthBar"></div>
+        </div>
+    </div>
+
+    <div id="startScreen" class="screen">
+        <h1>Grand Car</h1>
+        <p>Remastered Edition</p>
+        <div class="tutorial">
+            SETAS para mover<br>
+            <b>ESPAÇO</b> para roubar veículos próximos<br>
+            Cuidado: Se seu carro explodir, corra!
+        </div>
+        <button onclick="startGame()">JOGAR AGORA</button>
+    </div>
+
+    <div id="gameOverScreen" class="screen hidden">
+        <h1 style="color: #c0392b;">Wasted</h1>
+        <p>Pontuação Final: <span id="finalScore">0</span></p>
+        <button onclick="resetGame()">TENTAR DE NOVO</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+/** SETUP DO CANVAS **/
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('gameContainer');
+
+// Ajustar tamanho
+canvas.width = 450;
+canvas.height = window.innerHeight;
+
+/** VARIÁVEIS DO JOGO **/
+let gameLoopId;
+let frames = 0;
+let score = 0;
+let gameSpeed = 0;
+let baseSpeed = 5;
+let roadOffset = 0;
+let isGameOver = false;
+let shakeTime = 0;
+
+// Elementos UI
+const uiScore = document.getElementById('scoreVal');
+const uiSpeed = document.getElementById('speedVal');
+const uiHealthCont = document.getElementById('healthBarContainer');
+const uiHealth = document.getElementById('healthBar');
+const screenStart = document.getElementById('startScreen');
+const screenOver = document.getElementById('gameOverScreen');
+
+// Objetos
+let player = {
+    x: 200, y: 0, w: 30, h: 50,
+    color: '#3498db',
+    type: 'human', // human, sedan, sport, truck
+    hp: 100, maxHp: 100,
+    invincible: 0
+};
+let traffic = [];
+let particles = [];
+
+// Definição dos Veículos
+const carTypes = {
+    human: { w: 20, h: 20, color: '#3498db', speed: 4, hp: 1 },
+    sedan: { w: 44, h: 75, color: '#e74c3c', speed: 8, hp: 100 },
+    taxi:  { w: 44, h: 75, color: '#f1c40f', speed: 8, hp: 100 },
+    sport: { w: 46, h: 70, color: '#9b59b6', speed: 12, hp: 80 },
+    truck: { w: 55, h: 110, color: '#95a5a6', speed: 6, hp: 200 },
+    cop:   { w: 44, h: 75, color: '#2c3e50', speed: 10, hp: 150 }
+};
+
+/** CONTROLES **/
+const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, Space: false };
+window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+window.addEventListener('keyup', e => { 
+    if(keys.hasOwnProperty(e.code)) keys[e.code] = false; 
+    if(e.code === 'Space') attemptHijack();
+});
+
+/** LÓGICA CORE **/
+
+function startGame() {
+    screenStart.classList.add('hidden');
+    resetGame();
+}
+
+function resetGame() {
+    screenOver.classList.add('hidden');
+    isGameOver = false;
+    score = 0;
+    frames = 0;
+    gameSpeed = 0;
+    traffic = [];
+    particles = [];
+    
+    // Reset Player (Começa a pé)
+    player.type = 'human';
+    player.w = carTypes.human.w;
+    player.h = carTypes.human.h;
+    player.x = canvas.width / 2;
+    player.y = canvas.height - 100;
+    player.hp = 1;
+    player.invincible = 60; // 1 seg invencibilidade
+
+    updateUI();
+    cancelAnimationFrame(gameLoopId);
+    loop();
+}
+
+function loop() {
+    if (isGameOver) return;
+
+    update();
+    draw();
+    frames++;
+    gameLoopId = requestAnimationFrame(loop);
+}
+
+function update() {
+    // Aumentar dificuldade com o tempo
+    const targetSpeed = player.type === 'human' ? 0 : carTypes[player.type].speed;
+    // Efeito de aceleração suave
+    gameSpeed += (targetSpeed - gameSpeed) * 0.05;
+    
+    // Mover estrada
+    roadOffset += gameSpeed + 2; 
+    if (roadOffset >= 80) roadOffset = 0;
+
+    // Score
+    if (frames % 10 === 0 && player.type !== 'human') score++;
+
+    // Movimento Player
+    const moveSpeed = 5;
+    if (keys.ArrowLeft && player.x > 10) player.x -= moveSpeed;
+    if (keys.ArrowRight && player.x < canvas.width - player.w - 10) player.x += moveSpeed;
+    if (keys.ArrowUp && player.y > 200) player.y -= moveSpeed / 2;
+    if (keys.ArrowDown && player.y < canvas.height - player.h - 10) player.y += moveSpeed / 2;
+
+    // Shake
+    if (shakeTime > 0) shakeTime--;
+
+    // Gerar Tráfego
+    if (Math.random() < 0.02) spawnCar();
+
+    // Atualizar Tráfego
+    for (let i = traffic.length - 1; i >= 0; i--) {
+        let t = traffic[i];
+        // Carros descem baseados na velocidade relativa (Player speed vs Car speed)
+        // Se o player está rápido, os outros carros parecem descer mais rápido ou subir
+        let relSpeed = (t.speedConst - (player.type === 'human' ? 0 : gameSpeed));
+        
+        // Ajuste simples: Carros sempre descem, mas velocidade varia
+        t.y += 3 + (gameSpeed * 0.1); 
+
+        if (t.y > canvas.height) {
+            traffic.splice(i, 1);
+            if(player.type !== 'human') score += 10;
+        }
+
+        // Colisão
+        if (checkRectCollide(player, t)) {
+            handleCollision(t, i);
+        }
+    }
+
+    // Partículas
+    updateParticles();
+    
+    // Invencibilidade
+    if (player.invincible > 0) player.invincible--;
+
+    updateUI();
+}
+
+function spawnCar() {
+    const lanes = [40, 140, 240, 340]; // 4 faixas
+    const lane = lanes[Math.floor(Math.random() * lanes.length)];
+    
+    const types = ['sedan', 'sedan', 'taxi', 'sport', 'truck', 'cop'];
+    const typeKey = types[Math.floor(Math.random() * types.length)];
+    const stats = carTypes[typeKey];
+
+    traffic.push({
+        x: lane + (Math.random() * 20 - 10),
+        y: -150,
+        w: stats.w,
+        h: stats.h,
+        color: stats.color,
+        type: typeKey,
+        speedConst: stats.speed // Velocidade natural do NPC
+    });
+}
+
+function attemptHijack() {
+    if (player.type !== 'human') return; // Só rouba se estiver a pé (por enquanto)
+
+    let closest = null;
+    let minDist = 100;
+
+    traffic.forEach((t, i) => {
+        const dist = Math.hypot((player.x + player.w/2) - (t.x + t.w/2), (player.y + player.h/2) - (t.y + t.h/2));
+        if (dist < minDist) {
+            minDist = dist;
+            closest = { car: t, index: i };
+        }
+    });
+
+    if (closest) {
+        // ROUBO BEM SUCEDIDO
+        const target = closest.car;
+        
+        // Configurar player com novo carro
+        player.type = target.type;
+        player.w = target.w;
+        player.h = target.h;
+        player.x = target.x;
+        player.y = target.y;
+        player.hp = carTypes[target.type].hp;
+        player.maxHp = player.hp;
+        player.invincible = 30;
+
+        // Remover carro da rua
+        traffic.splice(closest.index, 1);
+
+        // Efeitos
+        createParticles(player.x + player.w/2, player.y + player.h/2, 20, '#fff');
+        score += 200;
+        shakeTime = 10;
+    }
+}
+
+function handleCollision(car, index) {
+    if (player.invincible > 0) return;
+
+    if (player.type === 'human') {
+        // Atropelado
+        gameOver();
+    } else {
+        // Batida de carro
+        createParticles((player.x + car.x)/2, (player.y + car.y)/2, 10, 'orange');
+        shakeTime = 5;
+        player.hp -= 20;
+        player.invincible = 10; // Pequeno tempo para não tomar hitkill
+
+        // Empurrão
+        if (player.x < car.x) player.x -= 10; else player.x += 10;
+
+        // Verificar se carro quebrou
+        if (player.hp <= 0) {
+            explodePlayer();
+        }
+    }
+}
+
+function explodePlayer() {
+    createParticles(player.x + player.w/2, player.y + player.h/2, 50, '#e74c3c'); // Explosão
+    shakeTime = 20;
+    
+    // Ejetar Player
+    player.type = 'human';
+    player.w = carTypes.human.w;
+    player.h = carTypes.human.h;
+    player.hp = 1;
+    player.invincible = 120; // Tempo para fugir
+    // Player aparece um pouco para o lado
+    player.x += 20;
+}
+
+function gameOver() {
+    isGameOver = true;
+    document.getElementById('finalScore').innerText = score;
+    screenOver.classList.remove('hidden');
+}
+
+/** SISTEMA DE DESENHO (DRAW) **/
+
+function draw() {
+    // Limpar e aplicar Shake
+    ctx.save();
+    if (shakeTime > 0) {
+        const dx = (Math.random() - 0.5) * 10;
+        const dy = (Math.random() - 0.5) * 10;
+        ctx.translate(dx, dy);
+    }
+
+    // 1. Estrada
+    ctx.fillStyle = '#555'; // Asfalto
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Faixas Laterais
+    ctx.fillStyle = '#2c3e50'; // Grama/Calçada
+    ctx.fillRect(0, 0, 20, canvas.height);
+    ctx.fillRect(canvas.width - 20, 0, 20, canvas.height);
+
+    // Linhas da Estrada
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([40, 40]);
+    ctx.lineDashOffset = -roadOffset;
+    
+    const laneWidth = (canvas.width - 40) / 4;
+    for(let i=1; i<4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(20 + laneWidth * i, -50);
+        ctx.lineTo(20 + laneWidth * i, canvas.height + 50);
+        ctx.stroke();
+    }
+
+    // 2. Tráfego
+    traffic.forEach(t => drawVehicle(t));
+
+    // 3. Player
+    if (player.invincible % 4 < 2) { // Piscar se invencivel
+        drawVehicle(player, true);
+    }
+    
+    // Indicador de Roubo (Se estiver a pé e perto)
+    if (player.type === 'human') {
+        traffic.forEach(t => {
+            const dist = Math.hypot((player.x) - (t.x), (player.y) - (t.y));
+            if (dist < 100) {
+                ctx.strokeStyle = '#2ecc71';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.arc(t.x + t.w/2, t.y + t.h/2, 40, 0, Math.PI*2);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.fillText('SPACE', t.x + 5, t.y - 10);
+            }
+        });
+    }
+
+    // 4. Partículas
+    drawParticles();
+
+    ctx.restore();
+}
+
+function drawVehicle(obj, isPlayer = false) {
+    const x = obj.x;
+    const y = obj.y;
+    const w = obj.w;
+    const h = obj.h;
+    
+    if (obj.type === 'human') {
+        // Desenha humano (círculo com ombros)
+        ctx.fillStyle = obj.color;
+        ctx.beginPath();
+        ctx.arc(x + w/2, y + h/2, w/2, 0, Math.PI*2);
+        ctx.fill();
+        // Cabeça
+        ctx.fillStyle = '#f1c40f'; // Capacete/Cabelo
+        ctx.beginPath();
+        ctx.arc(x + w/2, y + h/2, w/4, 0, Math.PI*2);
+        ctx.fill();
+        return;
+    }
+
+    // Sombras
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(x + 5, y + 5, w, h);
+
+    // Pneus
+    ctx.fillStyle = '#000';
+    const wheelW = 6;
+    const wheelH = 12;
+    // FE, FD, TE, TD
+    ctx.fillRect(x - 2, y + 8, wheelW, wheelH); 
+    ctx.fillRect(x + w - wheelW + 2, y + 8, wheelW, wheelH); 
+    ctx.fillRect(x - 2, y + h - 15, wheelW, wheelH); 
+    ctx.fillRect(x + w - wheelW + 2, y + h - 15, wheelW, wheelH); 
+
+    // Carroceria
+    ctx.fillStyle = obj.color;
+    // Formato arredondado
+    drawRoundedRect(ctx, x, y, w, h, 5);
+
+    // Vidros
+    ctx.fillStyle = '#2c3e50';
+    // Para-brisa
+    ctx.fillRect(x + 4, y + 15, w - 8, 12);
+    // Vidro traseiro
+    ctx.fillRect(x + 4, y + h - 20, w - 8, 8);
+    // Teto (mais claro que o carro)
+    ctx.fillStyle = shadeColor(obj.color, 20);
+    ctx.fillRect(x + 5, y + 28, w - 10, h - 49);
+
+    // Luzes
+    // Faróis
+    ctx.fillStyle = '#f1c40f'; // Amarelo
+    ctx.beginPath();
+    ctx.arc(x + 5, y + 2, 3, 0, Math.PI*2);
+    ctx.arc(x + w - 5, y + 2, 3, 0, Math.PI*2);
+    ctx.fill();
+
+    // Lanternas
+    ctx.fillStyle = '#c0392b'; // Vermelho
+    ctx.fillRect(x + 2, y + h - 2, 8, 3);
+    ctx.fillRect(x + w - 10, y + h - 2, 8, 3);
+
+    // Detalhe Policia
+    if(obj.type === 'cop') {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x + 5, y + 30, w-10, h-60); // Faixa branca
+        // Sirene
+        ctx.fillStyle = 'red';
+        ctx.fillRect(x + w/2 - 8, y + 20, 8, 4);
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(x + w/2, y + 20, 8, 4);
+    }
+    
+    // Fumaça se danificado (apenas Player)
+    if (isPlayer && player.hp < 40) {
+        if (Math.random() < 0.3) createParticles(x + w/2, y + h, 1, '#555');
+    }
+}
+
+/** UTILITÁRIOS E PARTÍCULAS **/
+
+function updateParticles() {
+    for(let i=particles.length-1; i>=0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        p.size *= 0.95;
+        if(p.life <= 0) particles.splice(i, 1);
+    }
+}
+
+function drawParticles() {
+    particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 30;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+    });
+}
+
+function createParticles(x, y, count, color) {
+    for(let i=0; i<count; i++) {
+        particles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            life: 30 + Math.random() * 20,
+            size: 3 + Math.random() * 5,
+            color: color
+        });
+    }
+}
+
+function checkRectCollide(r1, r2) {
+    return (r1.x < r2.x + r2.w && r1.x + r1.w > r2.x &&
+            r1.y < r2.y + r2.h && r1.y + r1.h > r2.y);
+}
+
+function updateUI() {
+    uiScore.innerText = score;
+    uiSpeed.innerText = Math.floor(gameSpeed * 10);
+    
+    if (player.type === 'human') {
+        uiHealthCont.style.display = 'none';
+    } else {
+        uiHealthCont.style.display = 'block';
+        let pct = (player.hp / player.maxHp) * 100;
+        uiHealth.style.width = pct + '%';
+        uiHealth.style.backgroundColor = pct < 30 ? '#e74c3c' : '#2ecc71';
+    }
+}
+
+// Helper para desenhar retângulos arredondados
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Helper para escurecer/clarear cor
+function shadeColor(color, percent) {
+    var num = parseInt(color.replace("#",""),16),
+    amt = Math.round(2.55 * percent),
+    R = (num >> 16) + amt,
+    B = (num >> 8 & 0x00FF) + amt,
+    G = (num & 0x0000FF) + amt;
+    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+}
+
+// Iniciar
+updateUI();
+</script>
+</body>
+</html>
