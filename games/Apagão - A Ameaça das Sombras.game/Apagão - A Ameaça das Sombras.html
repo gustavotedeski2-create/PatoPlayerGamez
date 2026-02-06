@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Apagão v2.0: A Ameaça das Sombras</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        canvas { display: block; }
+        #ui-layer { position: absolute; top: 20px; left: 20px; color: #0f0; pointer-events: none; }
+        .bar-container { width: 200px; height: 15px; border: 2px solid #333; background: #111; margin-top: 5px; }
+        #battery-bar { width: 100%; height: 100%; background: #ffcc00; transition: width 0.2s; }
+        #health-bar { width: 100%; height: 100%; background: #cc0000; transition: width 0.2s; }
+        
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: white;
+            z-index: 10;
+        }
+        button { padding: 15px 30px; font-size: 20px; background: #333; color: white; border: 1px solid #fff; cursor: pointer; margin-top: 20px;}
+        button:hover { background: #555; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div>ENERGIA DA LANTERNA</div>
+    <div class="bar-container"><div id="battery-bar"></div></div>
+    <div style="margin-top:15px">SANIDADE / VIDA</div>
+    <div class="bar-container"><div id="health-bar"></div></div>
+    <p>OBJETIVO: Ativar o Gerador (Verde)</p>
+</div>
+
+<div id="overlay">
+    <h1 id="title-text">APAGÃO: PROTOCOLO SOMBRA</h1>
+    <p>Use WASD para mover. Mouse para mirar.</p>
+    <p>A luz afasta as sombras, mas gasta bateria.</p>
+    <button onclick="startGame()">INICIAR SISTEMA</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/* --- CONFIGURAÇÃO --- */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER, WIN
+let animationId;
+
+// Entidades
+const player = { x: 100, y: 100, size: 12, speed: 4, angle: 0, battery: 100, hp: 100 };
+const goal = { x: canvas.width - 80, y: canvas.height - 80, size: 40 };
+const keys = {};
+let obstacles = [];
+let enemies = [];
+let batteries = [];
+
+/* --- GERAÇÃO DE MAPA --- */
+function createLevel() {
+    obstacles = [];
+    enemies = [];
+    batteries = [];
+    
+    // Paredes externas
+    obstacles.push({x:0, y:0, w:canvas.width, h:10}); // Topo
+    obstacles.push({x:0, y:canvas.height-10, w:canvas.width, h:10}); // Base
+    obstacles.push({x:0, y:0, w:10, h:canvas.height}); // Esquerda
+    obstacles.push({x:canvas.width-10, y:0, w:10, h:canvas.height}); // Direita
+
+    // Obstáculos Aleatórios (Labirinto Simples)
+    for(let i=0; i<15; i++) {
+        obstacles.push({
+            x: Math.random() * (canvas.width - 200) + 50,
+            y: Math.random() * (canvas.height - 200) + 50,
+            w: Math.random() * 100 + 30,
+            h: Math.random() * 100 + 30
+        });
+    }
+
+    // Inimigos
+    for(let i=0; i<4; i++) {
+        enemies.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 15, speed: 2.5, stunned: false
+        });
+    }
+
+    // Baterias
+    for(let i=0; i<3; i++) {
+        batteries.push({
+            x: Math.random() * (canvas.width - 100) + 50,
+            y: Math.random() * (canvas.height - 100) + 50,
+            size: 10, active: true
+        });
+    }
+}
+
+/* --- LÓGICA DE COLISÃO (AABB) --- */
+function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
+    return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
+}
+
+function checkWallCollision(newX, newY) {
+    for (let obs of obstacles) {
+        if (rectIntersect(newX - player.size, newY - player.size, player.size*2, player.size*2, obs.x, obs.y, obs.w, obs.h)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* --- MATEMÁTICA --- */
+function getDistance(o1, o2) {
+    return Math.hypot(o1.x - o2.x, o1.y - o2.y);
+}
+
+// Verifica se o inimigo está no cone de luz
+function isInLight(target) {
+    if (player.battery <= 0) return false;
+    
+    const dx = target.x - player.x;
+    const dy = target.y - player.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    
+    if (dist > 350) return false; // Alcance da lanterna
+
+    const angleToTarget = Math.atan2(dy, dx);
+    let angleDiff = angleToTarget - player.angle;
+    
+    // Normalizar ângulo entre -PI e PI
+    while (angleDiff <= -Math.PI) angleDiff += 2*Math.PI;
+    while (angleDiff > Math.PI) angleDiff -= 2*Math.PI;
+
+    return Math.abs(angleDiff) < 0.4; // Abertura do cone
+}
+
+/* --- CORE GAME LOOP --- */
+function update() {
+    if (gameState !== 'PLAYING') return;
+
+    // 1. Movimento do Jogador
+    let dx = 0, dy = 0;
+    if (keys['w']) dy -= player.speed;
+    if (keys['s']) dy += player.speed;
+    if (keys['a']) dx -= player.speed;
+    if (keys['d']) dx += player.speed;
+
+    if (!checkWallCollision(player.x + dx, player.y)) player.x += dx;
+    if (!checkWallCollision(player.x, player.y + dy)) player.y += dy;
+
+    // 2. Recursos
+    player.battery -= 0.08;
+    if (player.battery < 0) player.battery = 0;
+    
+    // Coletar Baterias
+    batteries.forEach(bat => {
+        if(bat.active && getDistance(player, bat) < 20) {
+            bat.active = false;
+            player.battery = Math.min(player.battery + 40, 100);
+        }
+    });
+
+    // 3. IA dos Inimigos
+    enemies.forEach(enemy => {
+        const dist = getDistance(player, enemy);
+        const inLight = isInLight(enemy);
+
+        // Se estiver na luz, para/foge. Se não, persegue.
+        let speed = inLight ? 0 : enemy.speed; 
+        
+        // Movimento simples de perseguição
+        if (dist > 0 && speed > 0) {
+            const ex = (player.x - enemy.x) / dist;
+            const ey = (player.y - enemy.y) / dist;
+            enemy.x += ex * speed;
+            enemy.y += ey * speed;
+        }
+
+        // Dano
+        if (dist < player.size + enemy.size) {
+            player.hp -= 2;
+        }
+    });
+
+    // 4. Update UI
+    document.getElementById('battery-bar').style.width = player.battery + "%";
+    document.getElementById('health-bar').style.width = player.hp + "%";
+
+    // 5. Win/Lose
+    if (player.hp <= 0) endGame("VOCÊ FOI PEGO PELAS SOMBRAS");
+    if (getDistance(player, {x: goal.x + goal.size/2, y: goal.y + goal.size/2}) < 40) endGame("SISTEMA REINICIADO. VOCÊ SOBREVIVEU!", true);
+}
+
+function draw() {
+    // Fundo base (chão)
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Obstáculos
+    ctx.fillStyle = "#000";
+    obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+
+    // Itens (Baterias)
+    ctx.fillStyle = "#ff0";
+    batteries.forEach(b => {
+        if(b.active) {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 6, 0, Math.PI*2);
+            ctx.fill();
+        }
+    });
+
+    // Objetivo
+    ctx.fillStyle = "#0f0";
+    ctx.fillRect(goal.x, goal.y, goal.size, goal.size);
+
+    // Inimigos (Desenhados antes da escuridão para serem ocultos)
+    enemies.forEach(e => {
+        ctx.fillStyle = isInLight(e) ? "#ffaaaa" : "#900"; // Pálido na luz, escuro na sombra
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.size, 0, Math.PI*2);
+        ctx.fill();
+    });
+
+    // Jogador
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
+    ctx.fill();
+
+    /* --- SISTEMA DE ILUMINAÇÃO (RAYCASTING VISUAL) --- */
+    // Criamos uma camada preta sobre tudo
+    ctx.globalCompositeOperation = 'source-over'; // Padrão
+    
+    // Agora desenhamos a "escuridão"
+    // Mas vamos usar um truque: Desenhar a escuridão em todo lugar, MENOS onde está a luz
+    // Para isso, precisamos de um canvas temporário ou usar clip paths complexos.
+    // Vamos usar o método simplificado de "buraco na escuridão".
+    
+    ctx.fillStyle = "rgba(0, 0, 0, 0.98)"; // Escuridão quase total
+    ctx.fillRect(0,0, canvas.width, canvas.height);
+
+    // Agora "recortamos" a luz da escuridão
+    ctx.globalCompositeOperation = 'destination-out';
+    
+    if (player.battery > 0) {
+        // Feixe da lanterna (Gradiente para bordas suaves)
+        const gradient = ctx.createRadialGradient(player.x, player.y, 20, player.x, player.y, 350);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y);
+        ctx.arc(player.x, player.y, 350, player.angle - 0.4, player.angle + 0.4);
+        ctx.lineTo(player.x, player.y);
+        ctx.fill();
+        
+        // Pequeno brilho ao redor do jogador (luz ambiente)
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 40, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    // Resetar para desenho normal
+    ctx.globalCompositeOperation = 'source-over';
+
+    if(gameState === 'PLAYING') requestAnimationFrame(() => { update(); draw(); });
+}
+
+/* --- CONTROLE --- */
+function startGame() {
+    document.getElementById('overlay').classList.add('hidden');
+    player.hp = 100;
+    player.battery = 100;
+    player.x = 100; player.y = 100;
+    createLevel();
+    gameState = 'PLAYING';
+    draw();
+}
+
+function endGame(msg, win = false) {
+    gameState = win ? 'WIN' : 'GAMEOVER';
+    const overlay = document.getElementById('overlay');
+    document.getElementById('title-text').innerText = msg;
+    document.getElementById('title-text').style.color = win ? '#0f0' : '#f00';
+    overlay.classList.remove('hidden');
+}
+
+// Inputs
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+window.addEventListener('mousemove', e => player.angle = Math.atan2(e.clientY - player.y, e.clientX - player.x));
+
+// Iniciar no menu
+draw(); 
+
+</script>
+</body>
+</html>
