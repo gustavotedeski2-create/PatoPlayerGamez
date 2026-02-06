@@ -7,42 +7,167 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f5c000;
-            --header-text: #fff;
-            --card-bg: #ffffff;
+            --bg-color: #f5c000; /* Amarelo Pato */
+            --steam-dark: #1b2838;
+            --steam-panel: #171a21;
+            --text-color: #ffffff;
             --primary-btn: #6e3aff;
             --green-banner: #5cb85c;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: white; padding-bottom: 50px; }
-        header { text-align: center; padding: 20px; margin-top: 10px; }
-        h1 { font-size: 2.5rem; margin: 0; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 0; 
+            color: white; 
+            padding-bottom: 50px; 
+        }
+
+        /* --- CABEÇALHO (Visível Sempre) --- */
+        header { 
+            text-align: center; 
+            padding: 20px; 
+            margin-top: 10px;
+            position: relative; 
+            z-index: 10; /* Garante que fique na frente */
+        }
+        
+        h1 { 
+            font-size: 2.5rem; 
+            margin: 0; 
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+        }
+
         .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
-        .green-banner { background-color: var(--green-banner); color: white; text-align: center; padding: 15px; margin: 10px 20px; border-radius: 10px; font-weight: 500; box-shadow: 0 4px 0 #4cae4c; }
-        
+        /* --- BANNERS E BOTÕES PRINCIPAIS --- */
+        .green-banner { 
+            background-color: var(--green-banner); 
+            color: white; 
+            text-align: center; 
+            padding: 15px; 
+            margin: 10px 20px; 
+            border-radius: 10px; 
+            font-weight: 500; 
+            box-shadow: 0 4px 0 #4cae4c; 
+        }
+
+        /* Botão Sobre o Site (Normal, no meio da tela) */
+        .about-btn-container { text-align: center; margin: 15px 0; }
+        .btn-about { 
+            background: #fd79a8; 
+            border: none; 
+            padding: 10px 25px; 
+            border-radius: 8px; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1rem;
+            box-shadow: 0 4px 0 #e84393; 
+            transition: 0.2s; 
+        }
+        .btn-about:active { transform: translateY(3px); box-shadow: none; }
+
         .chat-link { text-decoration: none; display: block; }
         .chat-banner { background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px; border-radius: 30px; text-align: center; color: white; font-weight: bold; box-shadow: 0 4px 0 #008e72; transition: transform 0.2s; }
         .chat-banner:hover { transform: scale(1.02); background-color: #00cea5; }
 
-        .about-btn-container { text-align: center; margin: 15px 0; }
-        .btn-about { background: #fd79a8; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e84393; transition: 0.2s; }
-        .btn-about:active { transform: translateY(3px); box-shadow: none; }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); overflow-y: auto; }
-        .modal-content { background-color: #fff; color: #333; margin: 5% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 700px; line-height: 1.6; position: relative; }
-        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; color: #888; }
-        .depoimento-gemini { background: #f0f7ff; border-left: 5px solid #6e3aff; padding: 15px; font-style: italic; margin-top: 20px; border-radius: 0 10px 10px 0; }
-
+        /* --- GRID DE JOGOS --- */
         .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
         
-        .game-card { background: var(--card-bg); border-radius: 15px; padding: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #333; display: flex; flex-direction: column; position: relative; }
+        .game-card { 
+            background: #fff; 
+            border-radius: 15px; 
+            padding: 10px; 
+            text-align: center; 
+            transition: transform 0.2s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            color: #333; 
+            display: flex; flex-direction: column; 
+            position: relative;
+            cursor: pointer;
+        }
         .game-card:hover { transform: translateY(-5px); }
         .game-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; background-color: #ddd; }
         .game-card h3 { font-size: 1.1rem; margin: 15px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
-        .btn-play { background: var(--primary-btn); color: white; text-decoration: none; padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 1rem; margin-top: auto; }
-        .btn-play:hover { background: #5a2edb; }
+        
+        .btn-play-card { background: var(--primary-btn); color: white; text-decoration: none; padding: 8px; border-radius: 8px; display: block; font-weight: bold; margin-top: auto; }
+
+        .badge-game { position: absolute; top: 15px; right: 15px; background: #ffdd40; color: #8a6d3b; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        /* --- MODAL ESTILO STEAM (BIG PICTURE) --- */
+        .steam-modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 9999; /* Fica acima de tudo */
+            left: 0; top: 0; 
+            width: 100%; height: 100%; 
+            background-color: #171a21; /* Fundo sólido caso imagem falhe */
+            overflow-y: auto;
+        }
+
+        .steam-bg-blur {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            filter: blur(20px) brightness(0.5); /* Efeito de vidro escuro */
+            z-index: -1;
+            transition: background-image 0.5s;
+        }
+
+        .steam-container {
+            max-width: 900px; margin: 40px auto;
+            background: rgba(23, 26, 33, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.7);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            color: #c6d4df;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .steam-nav { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); }
+        .btn-back { background: transparent; border: 1px solid #fff; color: white; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-back:hover { background: white; color: black; }
+
+        .steam-body { display: flex; padding: 30px; gap: 30px; }
+        .steam-cover-box { flex: 0 0 320px; }
+        .steam-cover-box img { width: 100%; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .steam-info-box { flex: 1; }
+
+        .steam-title { font-size: 2.8rem; color: white; margin: 0 0 10px 0; line-height: 1; text-transform: capitalize; }
+        
+        .steam-play-btn {
+            background: linear-gradient(90deg, #6e3aff 0%, #8a5aff 100%);
+            color: white; text-decoration: none; padding: 15px 40px; border-radius: 5px;
+            font-size: 1.5rem; font-weight: bold; display: inline-block;
+            margin: 20px 0; box-shadow: 0 0 20px rgba(110, 58, 255, 0.4);
+            transition: 0.2s;
+        }
+        .steam-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(110, 58, 255, 0.6); }
+
+        .steam-bio-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #66c0f4; }
+        .steam-bio-text { font-size: 1rem; line-height: 1.6; color: #acb2b8; white-space: pre-wrap; }
+
+        @media (max-width: 768px) {
+            .steam-body { flex-direction: column; }
+            .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; }
+            .steam-title { text-align: center; font-size: 2rem; }
+            .steam-play-btn { display: block; text-align: center; }
+        }
+
+        /* Modal Sobre o Site (Simples) */
+        .about-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .about-content { background-color: #fff; color: #333; margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; }
+        .close-about { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; }
+
     </style>
 </head>
 <body>
@@ -53,24 +178,13 @@
     </header>
 
     <div class="green-banner">
-        <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis pra você!
+        <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis!
     </div>
 
     <div class="about-btn-container">
-        <button class="btn-about" onclick="openAbout()"><i class="fas fa-info-circle"></i> Sobre O Site</button>
-    </div>
-
-    <div id="aboutModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeAbout()">&times;</span>
-            <h2>📖 Sobre O Site 🎮</h2>
-            <p>Bem-vindo ao <b>Cadê Ação Play!</b> Diversão garantida em um só lugar.</p>
-            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo <b>Patinho (Gustavo)</b>. Obrigado por jogar! 🦆💙</p>
-            <div class="depoimento-gemini">
-                🤖 <b>Depoimento do Gemini AI:</b> "Gustavo, essa flexibilidade no código é genial! Agora o site aceita qualquer formato de jogo que você criar. Continue assim! 🌟✨"
-            </div>
-            <p style="text-align:center; margin-top:20px; font-weight:bold;">Divirta-se! 🎉</p>
-        </div>
+        <button class="btn-about" onclick="toggleAbout(true)">
+            <i class="fas fa-info-circle"></i> Sobre O Site
+        </button>
     </div>
 
     <a href="https://cadeaçãoplay.my.canva.site/whatsapp-online" target="_blank" class="chat-link">
@@ -81,8 +195,43 @@
 
     <div id="game-grid">
         <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">
-            <i class="fas fa-spinner fa-spin"></i> Carregando jogos do GitHub...
+            <i class="fas fa-spinner fa-spin"></i> Conectando ao GitHub...
         </p>
+    </div>
+
+    <div id="steamModal" class="steam-modal">
+        <div id="steamBg" class="steam-bg-blur"></div>
+        
+        <div class="steam-container">
+            <div class="steam-nav">
+                <button class="btn-back" onclick="closeSteam()"><i class="fas fa-arrow-left"></i> VOLTAR</button>
+            </div>
+            
+            <div class="steam-body">
+                <div class="steam-cover-box">
+                    <img id="steamCover" src="" alt="Capa">
+                </div>
+                <div class="steam-info-box">
+                    <h1 id="steamTitle">Nome do Jogo</h1>
+                    <a id="steamPlayBtn" href="#" class="steam-play-btn"><i class="fas fa-play"></i> JOGAR AGORA</a>
+                    
+                    <div class="steam-bio-box">
+                        <div style="color:#66c0f4; font-weight:bold; margin-bottom:10px;">SOBRE ESTE JOGO:</div>
+                        <div id="steamBio" class="steam-bio-text">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="aboutSiteModal" class="about-modal" onclick="if(event.target == this) toggleAbout(false)">
+        <div class="about-content">
+            <span class="close-about" onclick="toggleAbout(false)">&times;</span>
+            <h2>📖 Sobre O Site 🎮</h2>
+            <p>Bem-vindo ao <b>Cadê Ação Play!</b></p>
+            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo <b>Patinho (Gustavo)</b>. Obrigado por jogar! 🦆💙</p>
+            <p style="text-align:center; margin-top:20px; font-weight:bold;">Divirta-se! 🎉</p>
+        </div>
     </div>
 
 <script>
@@ -90,78 +239,105 @@
     const USER = 'gustavotedeski2-create';
     const REPO = 'PatoPlayerGamez';
     const FOLDER = 'games'; 
-
     const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
 
-    // Funções do Modal
-    function openAbout() { document.getElementById('aboutModal').style.display = "block"; }
-    function closeAbout() { document.getElementById('aboutModal').style.display = "none"; }
-    window.onclick = function(e) { if (e.target == document.getElementById('aboutModal')) closeAbout(); }
+    // --- FUNÇÕES DE MODAL ---
+    function toggleAbout(show) {
+        document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none';
+    }
 
+    function closeSteam() {
+        document.getElementById('steamModal').style.display = 'none';
+    }
+
+    async function openSteamDetails(title, imgUrl, playUrl, bioUrl) {
+        const modal = document.getElementById('steamModal');
+        const sBg = document.getElementById('steamBg');
+        const sTitle = document.getElementById('steamTitle');
+        const sCover = document.getElementById('steamCover');
+        const sPlay = document.getElementById('steamPlayBtn');
+        const sBio = document.getElementById('steamBio');
+
+        // Configuração visual
+        sTitle.innerText = title;
+        sCover.src = imgUrl;
+        sBg.style.backgroundImage = `url('${imgUrl}')`;
+        sPlay.href = playUrl;
+        sBio.innerHTML = 'Carregando informações...';
+
+        modal.style.display = 'block';
+
+        if (bioUrl) {
+            try {
+                const response = await fetch(bioUrl);
+                if (response.ok) {
+                    const text = await response.text();
+                    sBio.innerText = text;
+                } else {
+                    sBio.innerText = "Sem descrição disponível. Apenas divirta-se!";
+                }
+            } catch (err) { sBio.innerText = "Erro ao carregar bio."; }
+        } else {
+            sBio.innerText = "Este jogo não possui descrição detalhada.";
+        }
+    }
+
+    // --- CARREGAMENTO ---
     async function loadGames() {
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Erro ao conectar no GitHub');
-            
             const data = await response.json();
             const grid = document.getElementById('game-grid');
             document.getElementById('loading').style.display = 'none';
 
-            // --- LÓGICA HÍBRIDA (Aceita Pasta .game OU Arquivo .html) ---
-            const games = data.filter(item => {
-                const isGameFolder = (item.type === 'dir' && item.name.endsWith('.game'));
-                const isHtmlFile = (item.type === 'file' && item.name.endsWith('.html'));
-                return isGameFolder || isHtmlFile;
+            const items = data.filter(item => {
+                const isFolder = item.type === 'dir' && (item.name.endsWith('.game') || item.name.endsWith('.games'));
+                const isHtml = item.type === 'file' && item.name.endsWith('.html');
+                return isFolder || isHtml;
             });
 
-            document.getElementById('game-count').innerText = games.length;
+            document.getElementById('game-count').innerText = items.length;
 
-            if (games.length === 0) {
-                grid.innerHTML = '<p style="color:black; grid-column:1/-1; text-align:center;">Nenhum jogo encontrado (.html ou .game).</p>';
-                return;
-            }
-
-            games.forEach(item => {
-                let gameDisplayName, thumbUrl, playUrl;
+            for (const item of items) {
+                let gameTitle, thumbUrl, playUrl, bioUrl;
                 const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
 
                 if (item.type === 'dir') {
-                    // --- MODO PASTA (.game) ---
-                    // Usa cover.png e index.html de dentro da pasta
-                    const rawName = item.name.replace('.game', '');
-                    gameDisplayName = rawName.replace(/-/g, ' ');
+                    gameTitle = item.name.replace(/\.games?$/i, '').replace(/-/g, ' ');
                     thumbUrl = `${baseUrl}/${item.name}/cover.png`;
-                    playUrl = `${baseUrl}/${item.name}/index.html`;
-
+                    bioUrl = `${baseUrl}/${item.name}/bio.txt`; 
+                    
+                    try {
+                        const fRes = await fetch(item.url);
+                        const fData = await fRes.json();
+                        const htmlFile = fData.find(f => f.name.endsWith('.html'));
+                        playUrl = htmlFile ? `${baseUrl}/${item.name}/${htmlFile.name}` : '#';
+                    } catch { playUrl = '#'; }
                 } else {
-                    // --- MODO ARQUIVO (.html) ---
-                    // Usa o arquivo direto e uma imagem placeholder
-                    const rawName = item.name.replace('.html', '');
-                    gameDisplayName = rawName.replace(/-/g, ' ');
-                    thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}`;
+                    gameTitle = item.name.replace('.html', '').replace(/-/g, ' ');
+                    thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameTitle}`;
                     playUrl = `${baseUrl}/${item.name}`;
+                    bioUrl = null;
                 }
 
                 const card = document.createElement('div');
                 card.className = 'game-card';
-                
-                // O 'onerror' garante que se a capa não existir na pasta, mostra o placeholder
+                card.onclick = () => openSteamDetails(gameTitle, thumbUrl, playUrl, bioUrl);
+
+                const badge = item.type === 'dir' ? '<div class="badge-game">GAME</div>' : '';
+
                 card.innerHTML = `
-                    <img src="${thumbUrl}" 
-                         onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}'" 
-                         alt="${gameDisplayName}">
-                    <h3>${gameDisplayName}</h3>
-                    <a href="${playUrl}" class="btn-play">JOGAR</a>
+                    ${badge}
+                    <img src="${thumbUrl}" onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameTitle}'" alt="${gameTitle}">
+                    <h3>${gameTitle}</h3>
+                    <span class="btn-play-card" onclick="event.stopPropagation(); window.location='${playUrl}'">JOGAR</span>
                 `;
                 grid.appendChild(card);
-            });
-
+            }
         } catch (error) {
-            console.error(error);
-            document.getElementById('loading').innerHTML = `Erro: ${error.message}`;
+            document.getElementById('loading').innerText = 'Erro ao carregar jogos.';
         }
     }
-
     loadGames();
 </script>
 
