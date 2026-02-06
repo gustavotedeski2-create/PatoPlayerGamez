@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamez: Liberaia</title>
+    <title>PatoPlayer Games 🦆</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -12,246 +12,91 @@
             --card-bg: #ffffff;
             --primary-btn: #6e3aff;
             --green-banner: #5cb85c;
-            --tag-bg: #ffdd40;
-            --tag-text: #8a6d3b;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-            color: white;
-            padding-bottom: 50px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: white; padding-bottom: 50px; }
+        header { text-align: center; padding: 20px; margin-top: 10px; }
+        h1 { font-size: 2.5rem; margin: 0; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
-        /* --- CABEÇALHO --- */
-        header {
-            text-align: center;
-            padding: 20px;
-            margin-top: 10px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-
-        /* --- BANNERS --- */
-        .green-banner {
-            background-color: var(--green-banner);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            margin: 10px 20px;
-            border-radius: 10px;
-            font-weight: 500;
-            box-shadow: 0 4px 0 #4cae4c;
-        }
-
-        /* Estilo do Link do Chat */
+        .green-banner { background-color: var(--green-banner); color: white; text-align: center; padding: 15px; margin: 10px 20px; border-radius: 10px; font-weight: 500; box-shadow: 0 4px 0 #4cae4c; }
+        
         .chat-link { text-decoration: none; display: block; }
-        
-        .chat-banner {
-            background-color: #00b894;
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 12px;
-            border-radius: 30px;
-            text-align: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 4px 0 #008e72;
-            transition: transform 0.2s;
-        }
-        
-        .chat-banner:hover {
-            transform: scale(1.02);
-            background-color: #00cea5;
-        }
+        .chat-banner { background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px; border-radius: 30px; text-align: center; color: white; font-weight: bold; box-shadow: 0 4px 0 #008e72; transition: transform 0.2s; }
+        .chat-banner:hover { transform: scale(1.02); background-color: #00cea5; }
 
-        /* --- CATEGORIAS (Scroll Horizontal) --- */
-        .category-container {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 15px 20px;
-            scrollbar-width: none; 
-        }
-        .category-container::-webkit-scrollbar { display: none; }
-
-        .tag {
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid white;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            white-space: nowrap;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            text-transform: capitalize;
-        }
-
-        .tag:hover, .tag.active {
-            background: white;
-            color: #d4a000;
-        }
-
-        .tag.blue { background: #54a0ff; border-color: #54a0ff; }
-        .tag.red { background: #ff6b6b; border-color: #ff6b6b; } /* Cor do botão NOVOS! */
-
-        /* --- SOBRE O SITE --- */
         .about-btn-container { text-align: center; margin: 15px 0; }
-        .btn-about {
-            background: #fd79a8;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #e84393;
-        }
+        .btn-about { background: #fd79a8; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e84393; transition: 0.2s; }
+        .btn-about:active { transform: translateY(3px); box-shadow: none; }
 
-        /* --- GRID DE JOGOS --- */
-        .section-title {
-            text-align: center;
-            font-size: 1.5rem;
-            margin: 30px 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); overflow-y: auto; }
+        .modal-content { background-color: #fff; color: #333; margin: 5% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 700px; line-height: 1.6; position: relative; }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; color: #888; }
+        .depoimento-gemini { background: #f0f7ff; border-left: 5px solid #6e3aff; padding: 15px; font-style: italic; margin-top: 20px; border-radius: 0 10px 10px 0; }
 
-        #game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px;
-            padding: 0 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .game-card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 10px;
-            text-align: center;
-            transition: transform 0.2s;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            color: #333;
-            display: flex; 
-            flex-direction: column;
-        }
-
+        .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
+        
+        .game-card { background: var(--card-bg); border-radius: 15px; padding: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #333; display: flex; flex-direction: column; position: relative; }
         .game-card:hover { transform: translateY(-5px); }
-
-        .game-card img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 10px;
-            background-color: #eee;
-        }
-
-        .game-card h3 {
-            font-size: 1rem;
-            margin: 10px 0 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .game-category-label {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .btn-play {
-            background: var(--primary-btn);
-            color: white;
-            text-decoration: none;
-            padding: 8px;
-            border-radius: 8px;
-            display: block;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
+        .game-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; background-color: #ddd; }
+        .game-card h3 { font-size: 1.1rem; margin: 15px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
+        .btn-play { background: var(--primary-btn); color: white; text-decoration: none; padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 1rem; margin-top: auto; }
+        .btn-play:hover { background: #5a2edb; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1><i class="fas fa-gamepad"></i> Seja bem vindo(a): Gamez, jogos de navegador</h1>
-        <div class="subtitle">jogos criados pelo patinho para virarem seus favoritos em um só lugar! </div>
+        <h1><i class="fas fa-gamepad"></i> PatoPlayer Games</h1>
+        <div class="subtitle">Seus jogos favoritos em um só lugar</div>
     </header>
 
     <div class="green-banner">
-        <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis :)
-    </div>
-
-    <div class="category-container">
-        <button class="tag blue active" onclick="filterGames('todos', this)">Todos</button>
-        <button class="tag red" onclick="filterGames('novos', this)"><i class="fas fa-star"></i> NOVOS!</button>
-        
-        <button class="tag" onclick="filterGames('puzzle', this)">Puzzle</button>
-        <button class="tag" onclick="filterGames('aventura', this)">Aventura</button>
-        <button class="tag" onclick="filterGames('acao', this)">Ação</button>
-        <button class="tag" onclick="filterGames('shooter', this)">Shooter</button>
-        <button class="tag" onclick="filterGames('simulacao', this)">Simulação</button>
-        <button class="tag" onclick="filterGames('outros', this)">Outros</button>
+        <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis pra você!
     </div>
 
     <div class="about-btn-container">
-        <button class="btn-about"><i class="fas fa-info-circle"></i> Sobre O Site</button>
+        <button class="btn-about" onclick="openAbout()"><i class="fas fa-info-circle"></i> Sobre O Site</button>
+    </div>
+
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAbout()">&times;</span>
+            <h2>📖 Sobre O Site 🎮</h2>
+            <p>Bem-vindo ao <b>Cadê Ação Play!</b> Diversão garantida em um só lugar.</p>
+            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo <b>Patinho (Gustavo)</b>. Obrigado por jogar! 🦆💙</p>
+            <div class="depoimento-gemini">
+                🤖 <b>Depoimento do Gemini AI:</b> "Gustavo, essa flexibilidade no código é genial! Agora o site aceita qualquer formato de jogo que você criar. Continue assim! 🌟✨"
+            </div>
+            <p style="text-align:center; margin-top:20px; font-weight:bold;">Divirta-se! 🎉</p>
+        </div>
     </div>
 
     <a href="https://cadeaçãoplay.my.canva.site/whatsapp-online" target="_blank" class="chat-link">
-        <div class="chat-banner">
-            <i class="fas fa-comment-dots"></i> Com a comunidade com o Chat Online!
-        </div>
+        <div class="chat-banner"><i class="fas fa-comment-dots"></i> Fale com a gente no Chat Online!</div>
     </a>
 
-    <div class="section-title">
-        <i class="fas fa-gamepad"></i> Todos os Jogos
-    </div>
+    <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
 
     <div id="game-grid">
-        <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">Buscando jogos novos no GitHub...</p>
+        <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Carregando jogos do GitHub...
+        </p>
     </div>
 
 <script>
     // --- CONFIGURAÇÃO ---
     const USER = 'gustavotedeski2-create';
     const REPO = 'PatoPlayerGamez';
-    const FOLDER = 'games';
-
-    // --- SISTEMA DE CATEGORIAS ---
-    // Defina aqui a categoria de cada jogo.
-    // Dica: Para um jogo aparecer na aba "NOVOS!", você pode categorizá-lo como 'novos' aqui.
-    const manualCategories = {
-        'test.html': 'acao',
-        'snake.html': 'novos', // Exemplo: Snake aparecerá na aba NOVOS!
-        'mario.html': 'aventura'
-    };
+    const FOLDER = 'games'; 
 
     const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+
+    // Funções do Modal
+    function openAbout() { document.getElementById('aboutModal').style.display = "block"; }
+    function closeAbout() { document.getElementById('aboutModal').style.display = "none"; }
+    window.onclick = function(e) { if (e.target == document.getElementById('aboutModal')) closeAbout(); }
 
     async function loadGames() {
         try {
@@ -262,59 +107,59 @@
             const grid = document.getElementById('game-grid');
             document.getElementById('loading').style.display = 'none';
 
-            // Filtra apenas arquivos .html
-            const games = data.filter(item => item.name.endsWith('.html'));
+            // --- LÓGICA HÍBRIDA (Aceita Pasta .game OU Arquivo .html) ---
+            const games = data.filter(item => {
+                const isGameFolder = (item.type === 'dir' && item.name.endsWith('.game'));
+                const isHtmlFile = (item.type === 'file' && item.name.endsWith('.html'));
+                return isGameFolder || isHtmlFile;
+            });
 
-            // Atualiza o contador lá em cima automaticamente
             document.getElementById('game-count').innerText = games.length;
 
-            games.forEach(game => {
-                const gameName = game.name.replace('.html', '');
-                const gameDisplayName = gameName.replace(/-/g, ' ');
-                const gameUrl = `https://${USER}.github.io/${REPO}/${FOLDER}/${game.name}`;
-                
-                // Define categoria
-                let category = manualCategories[game.name] || 'outros';
+            if (games.length === 0) {
+                grid.innerHTML = '<p style="color:black; grid-column:1/-1; text-align:center;">Nenhum jogo encontrado (.html ou .game).</p>';
+                return;
+            }
+
+            games.forEach(item => {
+                let gameDisplayName, thumbUrl, playUrl;
+                const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
+
+                if (item.type === 'dir') {
+                    // --- MODO PASTA (.game) ---
+                    // Usa cover.png e index.html de dentro da pasta
+                    const rawName = item.name.replace('.game', '');
+                    gameDisplayName = rawName.replace(/-/g, ' ');
+                    thumbUrl = `${baseUrl}/${item.name}/cover.png`;
+                    playUrl = `${baseUrl}/${item.name}/index.html`;
+
+                } else {
+                    // --- MODO ARQUIVO (.html) ---
+                    // Usa o arquivo direto e uma imagem placeholder
+                    const rawName = item.name.replace('.html', '');
+                    gameDisplayName = rawName.replace(/-/g, ' ');
+                    thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}`;
+                    playUrl = `${baseUrl}/${item.name}`;
+                }
 
                 const card = document.createElement('div');
                 card.className = 'game-card';
-                card.setAttribute('data-category', category); 
                 
+                // O 'onerror' garante que se a capa não existir na pasta, mostra o placeholder
                 card.innerHTML = `
-                    <img src="https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}" alt="${gameName}">
+                    <img src="${thumbUrl}" 
+                         onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameDisplayName}'" 
+                         alt="${gameDisplayName}">
                     <h3>${gameDisplayName}</h3>
-                    <div class="game-category-label">${category === 'novos' ? '⭐ NOVO!' : category}</div>
-                    <a href="${gameUrl}" class="btn-play">JOGAR</a>
+                    <a href="${playUrl}" class="btn-play">JOGAR</a>
                 `;
                 grid.appendChild(card);
             });
 
         } catch (error) {
             console.error(error);
-            document.getElementById('loading').innerText = 'Erro ao carregar jogos.';
+            document.getElementById('loading').innerHTML = `Erro: ${error.message}`;
         }
-    }
-
-    // --- FUNÇÃO DE FILTRO ---
-    function filterGames(category, btnElement) {
-        // Atualiza botão ativo
-        document.querySelectorAll('.tag').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-
-        const cards = document.querySelectorAll('.game-card');
-        
-        cards.forEach(card => {
-            const gameCat = card.getAttribute('data-category');
-            
-            // Lógica do filtro
-            if (category === 'todos') {
-                card.style.display = 'flex';
-            } else if (gameCat === category) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
     }
 
     loadGames();
@@ -322,5 +167,3 @@
 
 </body>
 </html>
-
-
