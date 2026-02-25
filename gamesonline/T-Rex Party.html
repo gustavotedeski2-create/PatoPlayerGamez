@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Rex P2P Visual</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root { --primary: #535353; --accent: #f2a900; --bg: #f7f7f7; --card-bg: #fff; }
+        body { font-family: 'Verdana', sans-serif; background: var(--bg); color: var(--primary); text-align: center; margin: 0; overflow: hidden; }
+
+        /* --- LAYOUTS --- */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: 0.3s; }
+        .hidden { display: none !important; }
+        
+        .card { background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: left; }
+        
+        h1 { margin: 0 0 20px 0; font-size: 2rem; text-align: center; }
+        h1 span { color: var(--accent); }
+
+        /* --- CONTROLES VISUAIS --- */
+        label { font-weight: bold; font-size: 0.9rem; display: block; margin-top: 15px; }
+        input[type="text"], input[type="color"] { width: 100%; padding: 12px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        input[type="text"]:focus { border-color: var(--accent); outline: none; }
+
+        /* Sliders */
+        .range-container { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        input[type="range"] { flex: 1; cursor: pointer; accent-color: var(--accent); }
+        .badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; min-width: 30px; text-align: center; }
+
+        /* Botões */
+        button { width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 8px; background: var(--primary); color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button.secondary { background: #ddd; color: #333; margin-top: 10px; }
+        button:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        /* Checkbox Estilizado */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background: #eee; padding: 10px; border-radius: 8px; }
+        .toggle-row input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+
+        /* Jogo */
+        #game-area { width: 100%; height: 100%; display: none; background: #fff; position: relative; }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ui-hud { position: absolute; top: 10px; right: 20px; text-align: right; pointer-events: none; }
+        .hud-stat { font-size: 1.2rem; font-weight: bold; color: #333; }
+        .death-msg { background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 4px; margin-top: 5px; animation: fade 3s forwards; }
+        @keyframes fade { 0% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; display: none;} }
+
+    </style>
+</head>
+<body>
+
+    <div id="screen-profile" class="screen">
+        <div class="card">
+            <h1>T-Rex <span>Party</span></h1>
+            <label>Qual seu nome?</label>
+            <input type="text" id="my-nick" placeholder="Ex: Rex" maxlength="10">
+            
+            <label>Escolha sua cor:</label>
+            <input type="color" id="my-color" value="#f2a900" style="height: 50px; cursor: pointer;">
+            
+            <button onclick="toMenu()">Continuar</button>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="screen hidden">
+        <div class="card">
+            <h1>Menu</h1>
+            <button onclick="toHost()" style="background: var(--accent);">CRIAR SALA</button>
+            <button onclick="toJoin()">ENTRAR EM UMA SALA</button>
+            <button class="secondary" onclick="backToProfile()">Voltar</button>
+        </div>
+    </div>
+
+    <div id="screen-host" class="screen hidden">
+        <div class="card">
+            <h1>Criar Sala</h1>
+            
+            <label>Nome da Sala (Código):</label>
+            <input type="text" id="host-room-name" placeholder="Ex: 1, sala1, abc...">
+            
+            <label>Velocidade Inicial:</label>
+            <div class="range-container">
+                <span>🐢</span>
+                <input type="range" id="cfg-speed" min="5" max="15" value="8" oninput="updateVal('val-speed', this.value)">
+                <span>🚀</span>
+                <span id="val-speed" class="badge">8</span>
+            </div>
+
+            <label>Limite de Jogadores:</label>
+            <div class="range-container">
+                <span>👤</span>
+                <input type="range" id="cfg-players" min="2" max="10" value="4" oninput="updateVal('val-players', this.value)">
+                <span>👥</span>
+                <span id="val-players" class="badge">4</span>
+            </div>
+
+            <div class="toggle-row">
+                <span>🔒 Travar Aceleração?</span>
+                <input type="checkbox" id="cfg-lock-speed">
+            </div>
+            <small style="display:block; margin-top:5px; color:#666;">Se marcado, o jogo não fica mais rápido com o tempo.</small>
+
+            <button onclick="startHosting()">Ligar Servidor</button>
+            <button class="secondary" onclick="backToMenu()">Voltar</button>
+            <p id="host-status" style="color: red; font-size: 0.8rem; text-align: center;"></p>
+        </div>
+    </div>
+
+    <div id="screen-join" class="screen hidden">
+        <div class="card">
+            <h1>Entrar</h1>
+            <label>Digite o Código da Sala:</label>
+            <input type="text" id="join-room-name" placeholder="Ex: 1">
+            <button onclick="joinGame()" style="background: #4caf50;">Entrar Agora</button>
+            <button class="secondary" onclick="backToMenu()">Voltar</button>
+            <p id="join-status" style="color: #666; font-size: 0.8rem; text-align: center; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <div id="game-area">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-hud">
+            <div class="hud-stat" id="score-display">0000</div>
+            <div class="hud-stat" id="alive-display" style="color: #4caf50; font-size: 1rem;">Vivos: -</div>
+            <div id="kill-feed"></div>
+        </div>
+        <button style="position: absolute; top: 10px; left: 10px; width: auto; padding: 5px 10px; margin: 0; font-size: 0.8rem; opacity: 0.5;" onclick="location.reload()">Sair</button>
+    </div>
+
+<script>
+    // --- LÓGICA DE ID SIMPLIFICADA ---
+    // Usamos um prefixo global para evitar colisão com outros apps no PeerJS
+    const APP_PREFIX = "trex-p2p-game-v2-"; 
+    
+    let peer = null;
+    let conn = null; // Para cliente
+    let hostConns = []; // Para host
+    
+    // Estado do Jogo
+    const STATE = {
+        role: null, // 'HOST' ou 'CLIENT'
+        nick: "Player",
+        color: "#000000",
+        roomCode: "",
+        players: {}, // { id: { x, y, nick, color, alive } }
+        config: { speed: 8, maxPlayers: 4, lockSpeed: false },
+        gameActive: false,
+        myId: null,
+        score: 0,
+        speedMultiplier: 1, // Aumenta com o tempo se não estiver travado
+        isDead: false
+    };
+
+    // --- UI NAVIGATION ---
+    function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function toMenu() { 
+        const n = document.getElementById('my-nick').value;
+        if(!n) return alert("Digite um nome!");
+        STATE.nick = n;
+        STATE.color = document.getElementById('my-color').value;
+        show('screen-menu'); 
+    }
+    function backToProfile() { show('screen-profile'); }
+    function toHost() { show('screen-host'); }
+    function toJoin() { show('screen-join'); }
+    function backToMenu() { show('screen-menu'); }
+    function updateVal(id, val) { document.getElementById(id).innerText = val; }
+
+    // --- REDE (NETWORKING) ---
+
+    // 1. INICIAR COMO HOST
+    function startHosting() {
+        const code = document.getElementById('host-room-name').value.trim();
+        if (!code) return alert("Crie um código para a sala!");
+
+        STATE.role = 'HOST';
+        STATE.roomCode = code;
+        STATE.config.speed = parseInt(document.getElementById('cfg-speed').value);
+        STATE.config.maxPlayers = parseInt(document.getElementById('cfg-players').value);
+        STATE.config.lockSpeed = document.getElementById('cfg-lock-speed').checked;
+
+        document.getElementById('host-status').innerText = "Criando sala...";
+        
+        // Tenta criar o Peer com ID fixo: prefixo + código
+        peer = new Peer(APP_PREFIX + code);
+
+        peer.on('open', (id) => {
+            STATE.myId = id;
+            // Adiciona o host na lista de players
+            STATE.players[id] = { id, nick: STATE.nick, color: STATE.color, y: 0, alive: true };
+            startGameUI(); // Host entra direto no jogo e espera
+        });
+
+        peer.on('error', (err) => {
+            if (err.type === 'unavailable-id') {
+                document.getElementById('host-status').innerText = "Erro: A sala '" + code + "' já existe! Escolha outro nome.";
+            } else {
+                document.getElementById('host-status').innerText = "Erro de conexão: " + err.type;
+            }
+        });
+
+        peer.on('connection', (c) => {
+            // Se sala cheia
+            if (Object.keys(STATE.players).length >= STATE.config.maxPlayers) {
+                c.send({ type: 'KICK', msg: 'Sala Cheia!' });
+                setTimeout(() => c.close(), 500);
+                return;
+            }
+            hostConns.push(c);
+            setupHostEvents(c);
+        });
+    }
+
+    // 2. ENTRAR COMO CLIENTE
+    function joinGame() {
+        const code = document.getElementById('join-room-name').value.trim();
+        if (!code) return alert("Digite o código da sala!");
+
+        STATE.role = 'CLIENT';
+        document.getElementById('join-status').innerText = "Conectando...";
+
+        // Cliente não precisa de ID fixo, pode ser aleatório
+        peer = new Peer();
+
+        peer.on('open', (id) => {
+            STATE.myId = id;
+            // Conecta ao Host
+            conn = peer.connect(APP_PREFIX + code);
+            setupClientEvents(conn);
+        });
+
+        peer.on('error', (err) => {
+            document.getElementById('join-status').innerText = "Erro: Não foi possível conectar.";
+        });
+    }
+
+    // --- EVENTOS DE REDE ---
+
+    function setupHostEvents(c) {
+        c.on('open', () => {
+            // Manda config inicial
+            c.send({ type: 'WELCOME', config: STATE.config, existingPlayers: STATE.players });
+        });
+        
+        c.on('data', (data) => {
+            if (data.type === 'JOIN') {
+                // Novo player entrou
+                STATE.players[c.peer] = { id: c.peer, nick: data.nick, color: data.color, y: 0, alive: true };
+                broadcast({ type: 'UPDATE_PLAYERS', players: STATE.players });
+            }
+            if (data.type === 'POS') {
+                if (STATE.players[c.peer]) STATE.players[c.peer].y = data.y;
+                broadcast({ type: 'POS_UPDATE', id: c.peer, y: data.y }, c.peer); // Repassa pra todos menos quem mandou
+            }
+            if (data.type === 'DIE') {
+                if (STATE.players[c.peer]) STATE.players[c.peer].alive = false;
+                broadcast({ type: 'KILL_FEED', nick: data.nick, reason: data.reason });
+                checkGameOver();
+            }
+        });
+
+        c.on('close', () => {
+            delete STATE.players[c.peer];
+            broadcast({ type: 'UPDATE_PLAYERS', players: STATE.players });
+        });
+    }
+
+    function setupClientEvents(c) {
+        c.on('open', () => { /* Espera welcome */ });
+        
+        c.on('data', (data) => {
+            if (data.type === 'KICK') { alert(data.msg); location.reload(); }
+            if (data.type === 'WELCOME') {
+                STATE.config = data.config;
+                STATE.players = data.existingPlayers;
+                startGameUI();
+                c.send({ type: 'JOIN', nick: STATE.nick, color: STATE.color });
+            }
+            if (data.type === 'UPDATE_PLAYERS') { STATE.players = data.players; }
+            if (data.type === 'POS_UPDATE') {
+                if (STATE.players[data.id]) STATE.players[data.id].y = data.y;
+            }
+            if (data.type === 'KILL_FEED') { showKill(data.nick, data.reason); }
+        });
+        
+        c.on('close', () => { alert("Host desconectou!"); location.reload(); });
+    }
+
+    function broadcast(msg, excludeId = null) {
+        hostConns.forEach(c => {
+            if (c.open && c.peer !== excludeId) c.send(msg);
+        });
+    }
+
+    function sendToHost(msg) {
+        if (STATE.role === 'HOST') {
+            // Processa localmente se for host
+            if (msg.type === 'DIE') {
+                STATE.players[STATE.myId].alive = false;
+                broadcast({ type: 'KILL_FEED', nick: STATE.nick, reason: msg.reason });
+                checkGameOver();
+            }
+        } else {
+            if (conn && conn.open) conn.send(msg);
+        }
+    }
+
+    function checkGameOver() {
+        // Lógica simples: se todos morreram, poderia reiniciar. 
+        // Por enquanto apenas atualiza UI
+    }
+
+    // --- LÓGICA DO JOGO (GAME LOOP) ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let obstacles = [];
+    let frame = 0;
+
+    const dino = { w: 40, h: 40, dy: 0, gravity: 0.6, jump: 10, grounded: false, y: 0 };
+    const groundY = 250;
+
+    function startGameUI() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('game-area').style.display = 'block';
+        resizeCanvas();
+        STATE.gameActive = true;
+        
+        // Inicializa Player Local
+        STATE.players[STATE.myId] = { id: STATE.myId, nick: STATE.nick, color: STATE.color, y: groundY - dino.h, alive: true };
+        
+        requestAnimationFrame(loop);
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.onresize = resizeCanvas;
+
+    function loop() {
+        if (!STATE.gameActive) return;
+        update();
+        draw();
+        frame++;
+        requestAnimationFrame(loop);
+    }
+
+    function update() {
+        // Aumentar dificuldade (Velocidade)
+        // Se NÃO estiver travado, a cada 1000 frames aumenta um pouco
+        let currentSpeed = STATE.config.speed;
+        if (!STATE.config.lockSpeed) {
+            currentSpeed += Math.floor(STATE.score / 500); // A cada 500 pontos, +1 speed
+        }
+
+        // Mover Obstáculos
+        if (frame % Math.floor(100 / (currentSpeed/5)) === 0) spawnObstacle();
+
+        obstacles.forEach(obs => obs.x -= currentSpeed);
+        obstacles = obstacles.filter(obs => obs.x + obs.w > 0);
+
+        // Física Local (Só se estiver vivo)
+        if (!STATE.isDead) {
+            STATE.score++;
+            
+            let p = STATE.players[STATE.myId];
+            if (!dino.grounded) {
+                dino.dy += dino.gravity;
+                p.y += dino.dy;
+            }
+
+            if (p.y > groundY - dino.h) {
+                p.y = groundY - dino.h;
+                dino.dy = 0;
+                dino.grounded = true;
+            }
+
+            // Colisão
+            obstacles.forEach(obs => {
+                if (
+                    100 < obs.x + obs.w &&
+                    100 + dino.w > obs.x &&
+                    p.y < obs.y + obs.h &&
+                    dino.h + p.y > obs.y
+                ) {
+                    die(obs.type);
+                }
+            });
+
+            // Sincronizar Posição (envia a cada 5 frames para não floodar)
+            if (frame % 5 === 0) {
+                if (STATE.role === 'CLIENT') conn.send({ type: 'POS', y: p.y });
+                else broadcast({ type: 'POS_UPDATE', id: STATE.myId, y: p.y });
+            }
+        }
+    }
+
+    function draw() {
+        // Fundo
+        ctx.fillStyle = "#f7f7f7";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Chão
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(canvas.width, groundY);
+        ctx.strokeStyle = "#535353";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Obstáculos
+        ctx.fillStyle = "#535353";
+        obstacles.forEach(obs => {
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        });
+
+        // Players
+        let aliveCount = 0;
+        Object.values(STATE.players).forEach(p => {
+            if (p.alive) aliveCount++;
+            else return; // Não desenha mortos
+
+            ctx.fillStyle = p.color;
+            // Se não for eu, fica meio transparente
+            ctx.globalAlpha = (p.id === STATE.myId) ? 1.0 : 0.4;
+            
+            // X fixo em 100 para todos para simplificar visualização
+            ctx.fillRect(100, p.y, dino.w, dino.h);
+            
+            // Nickname
+            ctx.globalAlpha = 1.0;
+            ctx.fillStyle = "#333";
+            ctx.font = "12px Arial";
+            ctx.fillText(p.nick, 100, p.y - 10);
+        });
+
+        // HUD
+        document.getElementById('score-display').innerText = Math.floor(STATE.score / 10).toString().padStart(5, '0');
+        document.getElementById('alive-display').innerText = "Vivos: " + aliveCount;
+
+        if (STATE.isDead) {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("VOCÊ MORREU (Modo Espectador)", canvas.width/2, canvas.height/2);
+            ctx.textAlign = "left";
+        }
+    }
+
+    function spawnObstacle() {
+        const type = Math.random() > 0.5 ? 'Cacto' : 'Pterodactyl';
+        let h = (type === 'Cacto') ? 40 : 20;
+        let w = (type === 'Cacto') ? 20 : 40;
+        let y = (type === 'Cacto') ? groundY - h : groundY - h - 30; // Ptero voa
+        
+        obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
+    }
+
+    function jump() {
+        if (!STATE.isDead && dino.grounded) {
+            dino.dy = -dino.jump;
+            dino.grounded = false;
+        }
+    }
+
+    function die(cause) {
+        STATE.isDead = true;
+        sendToHost({ type: 'DIE', reason: cause });
+        showKill("Você", cause);
+    }
+
+    function showKill(nick, reason) {
+        const feed = document.getElementById('kill-feed');
+        const el = document.createElement('div');
+        el.className = 'death-msg';
+        el.innerHTML = `☠️ <b>${nick}</b> bateu em ${reason}`;
+        feed.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+    }
+
+    // Input
+    window.addEventListener('keydown', e => { if(e.code==='Space'||e.code==='ArrowUp') jump(); });
+    window.addEventListener('touchstart', jump);
+
+</script>
+</body>
+</html>

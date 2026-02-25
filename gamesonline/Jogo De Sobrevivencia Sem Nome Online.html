@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Survival P2P v3 - Baús e Paredes</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
+        
+        #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; }
+        .panel { background: rgba(0,0,0,0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; pointer-events: auto; }
+        
+        input, button { padding: 10px; border: none; border-radius: 4px; margin-top: 5px; width: 100%; box-sizing: border-box; font-size: 14px; }
+        button { cursor: pointer; background: #27ae60; color: white; font-weight: bold; }
+        button:hover { background: #2ecc71; }
+        button.red { background: #c0392b; }
+        
+        /* HUD Inferior */
+        #hud { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: none; }
+        .slot { background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; border: 2px solid #555; width: 70px; text-align: center; position: relative; pointer-events: auto; transition: 0.2s; }
+        .slot.active { border-color: #f1c40f; transform: scale(1.1); box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
+        .key { position: absolute; top: -8px; left: -8px; background: #222; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #fff; font-size: 12px; line-height: 20px; font-weight: bold; }
+        .cost { font-size: 10px; color: #aaa; margin-top: 5px; }
+
+        /* Notificações */
+        #notification { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; color: #f1c40f; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+
+        #interaction-msg { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; text-shadow: 1px 1px 0 #000; color: white; display: none; }
+        
+        .hidden { display: none !important; }
+    </style>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div id="menu-screen" class="panel">
+        <h2 style="margin: 0 0 10px; color: #f1c40f;">🏰 Survival P2P v3</h2>
+        <input type="text" id="username" placeholder="Seu Nick" value="Sobrevivente">
+        <button onclick="createGame()">🏠 Criar Sala (Host)</button>
+        <p style="text-align: center; margin: 5px; font-size: 12px; color: #aaa;">OU</p>
+        <input type="text" id="host-id" placeholder="ID da Sala do Amigo">
+        <button class="red" onclick="joinGame()">🚀 Entrar (Client)</button>
+    </div>
+
+    <div id="lobby-screen" class="panel hidden">
+        <p style="color: #ccc;">Seu ID de Sala:</p>
+        <input type="text" id="my-id-display" readonly onclick="this.select()" style="background: #111; color: #f1c40f; text-align: center; font-family: monospace; letter-spacing: 1px;">
+        <div id="status" style="margin-top: 10px; color: #aaa; font-size: 12px;">Esperando jogador...</div>
+    </div>
+</div>
+
+<div id="notification">VOCÊ ENCONTROU UM ITEM RARO!</div>
+<div id="interaction-msg">Pressione [E] para abrir Baú</div>
+
+<div style="position: absolute; top: 10px; right: 10px; text-align: right; font-weight: bold; text-shadow: 1px 1px 0 #000;">
+    <div style="color: #2ecc71;">🌲 Madeira: <span id="wood-ui">0</span></div>
+    <div style="color: #95a5a6;">🧱 Pedra: <span id="stone-ui">0</span></div>
+</div>
+
+<div id="hud" class="hidden">
+    <div class="slot active" id="slot-1">
+        <div class="key">1</div>
+        🗡️ Espada
+        <div class="cost">15 Mad.</div>
+    </div>
+    <div class="slot" id="slot-2">
+        <div class="key">2</div>
+        ⛏️ Picareta
+        <div class="cost">10 Mad.</div>
+    </div>
+    <div class="slot" id="slot-3">
+        <div class="key">3</div>
+        🧱 Parede
+        <div class="cost">5 Pedra</div>
+    </div>
+    <div class="slot" id="slot-4" style="border-color: #e67e22; display: none;">
+        <div class="key">4</div>
+        🪓 Machado Dourado
+        <div class="cost">RARO</div>
+    </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/* --- CONFIGURAÇÃO --- */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Networking
+let peer = null, conn = null, myId = null, isHost = false;
+const myPid = 'p_' + Math.floor(Math.random() * 99999);
+
+// Dados do Jogo
+let players = {};
+let world = { trees: [], rocks: [], walls: [], chests: [] };
+const MSG_DISPLAY_TIME = 2000;
+
+// Configuração de Itens
+const ITEMS = {
+    'hand': { dmg: 5, range: 40, color: null, type: 'weapon' },
+    'sword': { dmg: 20, range: 60, color: '#bdc3c7', cost: {wood: 15}, type: 'weapon' },
+    'pickaxe': { dmg: 8, range: 50, color: '#f39c12', cost: {wood: 10}, type: 'tool' }, // Minera 2x mais rápido
+    'wall': { cost: {stone: 5}, type: 'build' },
+    'golden_axe': { dmg: 40, range: 70, color: '#ffd700', type: 'weapon', rare: true }
+};
+
+// Inicializa Player Local
+players[myPid] = {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    angle: 0,
+    hp: 100,
+    maxHp: 100,
+    wood: 0, stone: 0,
+    item: 'hand',
+    inventory: ['hand'] // Itens desbloqueados
+};
+
+// Inputs
+const keys = {};
+const mouse = { x: 0, y: 0 };
+
+/* --- REDE (PeerJS) --- */
+function initPeer() {
+    peer = new Peer(null, { debug: 1 });
+    peer.on('open', id => {
+        myId = id;
+        document.getElementById('my-id-display').value = id;
+    });
+    peer.on('connection', c => {
+        if (conn) { c.close(); return; } 
+        conn = c;
+        setupConn();
+        document.getElementById('status').innerText = "Jogador conectado!";
+        // Host gera o mundo e envia
+        if (isHost) {
+            generateWorld();
+            setTimeout(() => send({ type: 'world_sync', world }), 500);
+        }
+    });
+}
+
+function createGame() {
+    isHost = true;
+    players[myPid].name = document.getElementById('username').value;
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('lobby-screen').classList.remove('hidden');
+    initPeer();
+    startGame();
+}
+
+function joinGame() {
+    isHost = false;
+    const hostId = document.getElementById('host-id').value;
+    if (!hostId) return alert('Insira o ID!');
+    players[myPid].name = document.getElementById('username').value;
+    document.getElementById('menu-screen').classList.add('hidden');
+    
+    peer = new Peer();
+    peer.on('open', () => {
+        conn = peer.connect(hostId);
+        setupConn();
+    });
+}
+
+function setupConn() {
+    conn.on('open', () => {
+        document.getElementById('ui-layer').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        if (!isHost) startGame();
+    });
+    conn.on('data', handleData);
+    conn.on('close', () => alert('Conexão perdida!'));
+}
+
+function send(data) { if (conn && conn.open) conn.send(data); }
+
+function handleData(data) {
+    if (data.type === 'update_player') {
+        players[data.id] = data.p;
+    } 
+    else if (data.type === 'world_sync') {
+        world = data.world; // Recebe mundo completo
+    }
+    else if (data.type === 'hit_player') {
+        if (data.target === myPid) takeDamage(data.dmg);
+    }
+    else if (data.type === 'chest_opened') {
+        // Remove o baú visualmente para todos
+        world.chests = world.chests.filter(c => c.id !== data.chestId);
+    }
+    else if (data.type === 'wall_placed') {
+        world.walls.push(data.wall);
+    }
+}
+
+/* --- LÓGICA DO JOGO --- */
+
+function generateWorld() {
+    world = { trees: [], rocks: [], walls: [], chests: [] };
+    for (let i=0; i<30; i++) world.trees.push({ id: i, x: Math.random()*canvas.width, y: Math.random()*canvas.height, hp: 5 });
+    for (let i=0; i<15; i++) world.rocks.push({ id: i, x: Math.random()*canvas.width, y: Math.random()*canvas.height, hp: 5 });
+    
+    // Gera 3 baús raros
+    for (let i=0; i<3; i++) {
+        world.chests.push({ 
+            id: 'c_'+i, 
+            x: Math.random()*(canvas.width-100)+50, 
+            y: Math.random()*(canvas.height-100)+50 
+        });
+    }
+}
+
+function takeDamage(amount) {
+    const p = players[myPid];
+    p.hp -= amount;
+    
+    // Flash vermelho
+    ctx.fillStyle = 'rgba(255,0,0,0.3)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    
+    if (p.hp <= 0) {
+        p.hp = 100;
+        p.x = Math.random() * canvas.width;
+        p.y = Math.random() * canvas.height;
+        p.wood = 0; p.stone = 0; // Perde recursos
+        alert("VOCÊ MORREU!");
+    }
+    send({ type: 'update_player', id: myPid, p: p });
+}
+
+function equip(itemKey) {
+    const p = players[myPid];
+    const item = ITEMS[itemKey];
+
+    // Se já tem o item no inventário (ganho em baú ou já craftado)
+    if (p.inventory.includes(itemKey)) {
+        p.item = itemKey;
+    } else {
+        // Tenta craftar
+        if (item.cost) {
+            if (item.cost.wood && p.wood >= item.cost.wood) {
+                p.wood -= item.cost.wood;
+                p.inventory.push(itemKey);
+                p.item = itemKey;
+            } else if (item.cost.stone && p.stone >= item.cost.stone) {
+                p.stone -= item.cost.stone;
+                p.inventory.push(itemKey); // Paredes não salvam no inventário permanente neste exemplo simples, mas ok
+                p.item = itemKey;
+            }
+        }
+    }
+    updateHud();
+}
+
+function updateHud() {
+    document.getElementById('wood-ui').innerText = players[myPid].wood;
+    document.getElementById('stone-ui').innerText = players[myPid].stone;
+    
+    // Atualiza slots visuais
+    document.querySelectorAll('.slot').forEach(el => el.classList.remove('active'));
+    
+    if (players[myPid].item === 'sword') document.getElementById('slot-1').classList.add('active');
+    else if (players[myPid].item === 'pickaxe') document.getElementById('slot-2').classList.add('active');
+    else if (players[myPid].item === 'wall') document.getElementById('slot-3').classList.add('active');
+    else if (players[myPid].item === 'golden_axe') {
+        const s4 = document.getElementById('slot-4');
+        s4.style.display = 'block';
+        s4.classList.add('active');
+    }
+}
+
+function checkCollision(newX, newY) {
+    // Colisão com Paredes
+    for (let w of world.walls) {
+        if (newX > w.x - 25 && newX < w.x + 25 &&
+            newY > w.y - 25 && newY < w.y + 25) {
+            return true; // Colidiu
+        }
+    }
+    return false;
+}
+
+function showNotification(text) {
+    const n = document.getElementById('notification');
+    n.innerText = text;
+    n.style.opacity = 1;
+    setTimeout(() => n.style.opacity = 0, 3000);
+}
+
+/* --- LOOP PRINCIPAL --- */
+function update() {
+    const p = players[myPid];
+    const speed = 4;
+    let nextX = p.x;
+    let nextY = p.y;
+
+    if (keys['w']) nextY -= speed;
+    if (keys['s']) nextY += speed;
+    if (keys['a']) nextX -= speed;
+    if (keys['d']) nextX += speed;
+
+    // Verifica colisão antes de mover
+    if (!checkCollision(nextX, p.y)) p.x = nextX;
+    if (!checkCollision(p.x, nextY)) p.y = nextY;
+
+    // Limites do mapa
+    p.x = Math.max(0, Math.min(canvas.width, p.x));
+    p.y = Math.max(0, Math.min(canvas.height, p.y));
+
+    p.angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+
+    // Inputs de Teclado
+    if (keys['1']) equip('sword');
+    if (keys['2']) equip('pickaxe');
+    if (keys['3']) p.item = 'wall';
+
+    // Interação com Baús (Tecla E)
+    let nearChest = null;
+    world.chests.forEach(c => {
+        if (Math.hypot(p.x - c.x, p.y - c.y) < 40) nearChest = c;
+    });
+
+    const msg = document.getElementById('interaction-msg');
+    if (nearChest) {
+        msg.style.display = 'block';
+        if (keys['e'] || keys['E']) {
+            // Abrir Baú
+            world.chests = world.chests.filter(c => c.id !== nearChest.id);
+            p.inventory.push('golden_axe');
+            p.item = 'golden_axe';
+            showNotification("VOCÊ ACHOU O MACHADO DOURADO!");
+            updateHud();
+            
+            send({ type: 'chest_opened', chestId: nearChest.id });
+            
+            // Host também atualiza o mundo se for ele
+            if (isHost) send({ type: 'world_sync', world });
+            keys['e'] = false; // Evita spam
+        }
+    } else {
+        msg.style.display = 'none';
+    }
+
+    send({ type: 'update_player', id: myPid, p: p });
+}
+
+function draw() {
+    // Fundo e Grade
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    for(let i=0; i<canvas.width; i+=50) { ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); }
+    for(let i=0; i<canvas.height; i+=50) { ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); }
+    ctx.stroke();
+
+    // Paredes
+    world.walls.forEach(w => {
+        ctx.fillStyle = '#7f8c8d';
+        ctx.fillRect(w.x-20, w.y-20, 40, 40);
+        ctx.strokeStyle = '#34495e';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(w.x-20, w.y-20, 40, 40);
+        
+        // Detalhe de tijolo
+        ctx.beginPath(); ctx.moveTo(w.x-20, w.y); ctx.lineTo(w.x+20, w.y); ctx.stroke();
+    });
+
+    // Recursos
+    world.trees.forEach(t => {
+        if(t.hp<=0) return;
+        ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.arc(t.x, t.y, 20, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(t.x, t.y, 10, 0, Math.PI*2); ctx.fill();
+    });
+
+    world.rocks.forEach(r => {
+        if(r.hp<=0) return;
+        ctx.fillStyle = '#95a5a6'; ctx.fillRect(r.x-15, r.y-15, 30, 30);
+    });
+
+    // Baús
+    world.chests.forEach(c => {
+        ctx.fillStyle = '#d35400';
+        ctx.fillRect(c.x-15, c.y-10, 30, 20); // Base
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(c.x-15, c.y-5, 30, 2); // Fechadura
+        ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.fillText("?", c.x-3, c.y-15);
+    });
+
+    // Jogadores
+    for (let id in players) {
+        const p = players[id];
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        
+        // Nome e HP
+        ctx.fillStyle = 'white'; ctx.font = '12px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(p.name, 0, -40);
+        ctx.fillStyle = 'red'; ctx.fillRect(-15, -35, 30, 4);
+        ctx.fillStyle = '#2ecc71'; ctx.fillRect(-15, -35, 30 * (p.hp/p.maxHp), 4);
+
+        ctx.rotate(p.angle);
+
+        // Arma
+        if (p.item !== 'hand' && p.item !== 'wall') {
+            const info = ITEMS[p.item];
+            ctx.fillStyle = info.color || '#fff';
+            
+            if (p.item === 'golden_axe') {
+                ctx.fillRect(15, -2, 30, 4); // Cabo
+                ctx.fillStyle = '#f1c40f'; // Ouro
+                ctx.beginPath(); ctx.arc(40, 0, 10, 0, Math.PI*2); ctx.fill(); // Lâmina
+            } else {
+                ctx.fillRect(15, -2, 30, 4);
+            }
+        }
+
+        // Corpo
+        ctx.fillStyle = (id === myPid) ? '#3498db' : '#e74c3c';
+        ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill();
+        // Mãos
+        ctx.fillStyle = '#ecf0f1';
+        ctx.beginPath(); ctx.arc(12, 10, 5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(12, -10, 5, 0, Math.PI*2); ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+// Mouse Click (Ação)
+window.addEventListener('mousedown', () => {
+    const p = players[myPid];
+    
+    // Modo Construção
+    if (p.item === 'wall') {
+        if (p.stone >= ITEMS.wall.cost.stone) {
+            // Verifica se não está construindo em cima do jogador
+            if (Math.hypot(p.x - mouse.x, p.y - mouse.y) > 30) {
+                p.stone -= ITEMS.wall.cost.stone;
+                const newWall = { x: mouse.x, y: mouse.y };
+                world.walls.push(newWall);
+                updateHud();
+                send({ type: 'wall_placed', wall: newWall });
+                if (isHost) send({ type: 'world_sync', world });
+            }
+        }
+        return;
+    }
+
+    // Ataque / Coleta
+    let hitSomething = false;
+
+    // 1. Checar Players (PvP)
+    for (let id in players) {
+        if (id === myPid) continue;
+        const enemy = players[id];
+        const dist = Math.hypot(enemy.x - p.x, enemy.y - p.y);
+        const weapon = ITEMS[p.item] || ITEMS.hand;
+        
+        if (dist < weapon.range) {
+            send({ type: 'hit_player', target: id, dmg: weapon.dmg });
+            hitSomething = true;
+            
+            // Efeito visual de dano
+            ctx.fillStyle = 'red'; ctx.font = '20px Arial'; ctx.fillText("HIT!", enemy.x, enemy.y);
+        }
+    }
+
+    // 2. Recursos
+    if (!hitSomething) {
+        const weapon = ITEMS[p.item] || ITEMS.hand;
+        const miningPower = (p.item === 'pickaxe') ? 2 : 1;
+        
+        world.trees.forEach(t => {
+            if (Math.hypot(t.x - mouse.x, t.y - mouse.y) < 30 && t.hp > 0) {
+                t.hp--;
+                if(t.hp <= 0) p.wood += 5;
+                else p.wood += miningPower;
+                updateHud();
+                if(isHost) send({ type: 'world_sync', world });
+            }
+        });
+
+        world.rocks.forEach(r => {
+            if (Math.hypot(r.x - mouse.x, r.y - mouse.y) < 30 && r.hp > 0) {
+                r.hp--;
+                if(r.hp <= 0) p.stone += 5;
+                else p.stone += miningPower;
+                updateHud();
+                if(isHost) send({ type: 'world_sync', world });
+            }
+        });
+    }
+});
+
+// Eventos de Teclado
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+function startGame() {
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+    loop();
+}
+</script>
+</body>
+</html>
