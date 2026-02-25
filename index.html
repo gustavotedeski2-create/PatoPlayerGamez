@@ -6,37 +6,67 @@
     <title>PatoPlayer Games 🦆</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* --- VARIÁVEIS DE TEMA --- */
         :root {
-            --bg-color: #f5c000; /* Amarelo Pato */
+            /* Tema Clássico (Padrão) */
+            --bg-color: #f5c000; 
+            --text-color: #ffffff;
+            --card-bg: #ffffff;
+            --card-text: #333333;
+            --modal-bg: #ffffff;
+            --modal-text: #333333;
+            --header-shadow: rgba(0,0,0,0.1);
+            
             --steam-dark: #1b2838;
             --steam-panel: #171a21;
-            --text-color: #ffffff;
             --primary-btn: #6e3aff;
             --green-banner: #5cb85c;
         }
 
+        body.theme-dark {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --card-text: #ffffff;
+            --modal-bg: #1e1e1e;
+            --modal-text: #ffffff;
+            --header-shadow: rgba(255,255,255,0.1);
+        }
+
+        body.theme-light {
+            --bg-color: #f0f0f0;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --card-text: #333333;
+            --modal-bg: #ffffff;
+            --modal-text: #333333;
+            --header-shadow: rgba(0,0,0,0.1);
+        }
+
+        /* --- BASE DO SITE --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: var(--bg-color); 
+            color: var(--text-color); 
             margin: 0; 
             padding: 0; 
-            color: white; 
             padding-bottom: 50px; 
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- CABEÇALHO (Visível Sempre) --- */
+        /* --- CABEÇALHO --- */
         header { 
             text-align: center; 
             padding: 20px; 
             margin-top: 10px;
             position: relative; 
-            z-index: 10; /* Garante que fique na frente */
+            z-index: 10;
         }
         
         h1 { 
             font-size: 2.5rem; 
             margin: 0; 
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.1); 
+            text-shadow: 2px 2px 0px var(--header-shadow); 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -45,7 +75,7 @@
 
         .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
-        /* --- BANNERS E BOTÕES PRINCIPAIS --- */
+        /* --- BANNERS E BOTÕES --- */
         .green-banner { 
             background-color: var(--green-banner); 
             color: white; 
@@ -57,8 +87,8 @@
             box-shadow: 0 4px 0 #4cae4c; 
         }
 
-        /* Botão Sobre o Site (Normal, no meio da tela) */
-        .about-btn-container { text-align: center; margin: 15px 0; }
+        .header-buttons { display: flex; justify-content: center; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
+        
         .btn-about { 
             background: #fd79a8; 
             border: none; 
@@ -72,6 +102,7 @@
             transition: 0.2s; 
         }
         .btn-about:active { transform: translateY(3px); box-shadow: none; }
+        .btn-settings { background: #0984e3; box-shadow: 0 4px 0 #076bb8; }
 
         .chat-link { text-decoration: none; display: block; }
         .chat-banner { background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px; border-radius: 30px; text-align: center; color: white; font-weight: bold; box-shadow: 0 4px 0 #008e72; transition: transform 0.2s; }
@@ -82,13 +113,13 @@
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
         
         .game-card { 
-            background: #fff; 
+            background: var(--card-bg); 
+            color: var(--card-text);
             border-radius: 15px; 
             padding: 10px; 
             text-align: center; 
-            transition: transform 0.2s; 
+            transition: transform 0.2s, background 0.3s, color 0.3s; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            color: #333; 
             display: flex; flex-direction: column; 
             position: relative;
             cursor: pointer;
@@ -98,76 +129,62 @@
         .game-card h3 { font-size: 1.1rem; margin: 15px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
         
         .btn-play-card { background: var(--primary-btn); color: white; text-decoration: none; padding: 8px; border-radius: 8px; display: block; font-weight: bold; margin-top: auto; }
-
         .badge-game { position: absolute; top: 15px; right: 15px; background: #ffdd40; color: #8a6d3b; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        /* --- MODAL ESTILO STEAM (BIG PICTURE) --- */
-        .steam-modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 9999; /* Fica acima de tudo */
-            left: 0; top: 0; 
-            width: 100%; height: 100%; 
-            background-color: #171a21; /* Fundo sólido caso imagem falhe */
-            overflow-y: auto;
-        }
+        /* --- MODAIS COMUNS (SOBRE E CONFIGURAÇÕES) --- */
+        .about-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .about-content { background-color: var(--modal-bg); color: var(--modal-text); margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; transition: background 0.3s, color 0.3s;}
+        .close-about { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; }
 
-        .steam-bg-blur {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center;
-            filter: blur(20px) brightness(0.5); /* Efeito de vidro escuro */
-            z-index: -1;
-            transition: background-image 0.5s;
-        }
+        /* --- ESTILOS INTERNOS DE CONFIGURAÇÕES --- */
+        .theme-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .theme-btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s;}
+        .theme-btn:hover { transform: scale(1.05); }
+        .t-classic { background: #f5c000; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
+        .t-dark { background: #121212; color: white; border: 1px solid #444; }
+        .t-light { background: #ffffff; color: #333; border: 1px solid #ccc; }
+        .toggle-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; background: rgba(128,128,128,0.1); padding: 15px; border-radius: 10px;}
+        .toggle-container input { width: 20px; height: 20px; cursor: pointer; }
 
-        .steam-container {
-            max-width: 900px; margin: 40px auto;
-            background: rgba(23, 26, 33, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.7);
-            overflow: hidden;
-            display: flex; flex-direction: column;
-            color: #c6d4df;
-            border: 1px solid rgba(255,255,255,0.1);
-            animation: slideUp 0.3s ease-out;
-        }
+        /* --- MODAL ESTILO STEAM --- */
+        .steam-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: #171a21; overflow-y: auto; }
+        .steam-bg-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.5); z-index: -1; transition: background-image 0.5s; }
+        .steam-container { max-width: 900px; margin: 40px auto; background: rgba(23, 26, 33, 0.95); border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column; color: #c6d4df; border: 1px solid rgba(255,255,255,0.1); animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         .steam-nav { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); }
         .btn-back { background: transparent; border: 1px solid #fff; color: white; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-back:hover { background: white; color: black; }
-
         .steam-body { display: flex; padding: 30px; gap: 30px; }
         .steam-cover-box { flex: 0 0 320px; }
         .steam-cover-box img { width: 100%; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .steam-info-box { flex: 1; }
-
         .steam-title { font-size: 2.8rem; color: white; margin: 0 0 10px 0; line-height: 1; text-transform: capitalize; }
-        
-        .steam-play-btn {
-            background: linear-gradient(90deg, #6e3aff 0%, #8a5aff 100%);
-            color: white; text-decoration: none; padding: 15px 40px; border-radius: 5px;
-            font-size: 1.5rem; font-weight: bold; display: inline-block;
-            margin: 20px 0; box-shadow: 0 0 20px rgba(110, 58, 255, 0.4);
-            transition: 0.2s;
-        }
+        .steam-play-btn { background: linear-gradient(90deg, #6e3aff 0%, #8a5aff 100%); color: white; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 1.5rem; font-weight: bold; display: inline-block; margin: 20px 0; box-shadow: 0 0 20px rgba(110, 58, 255, 0.4); transition: 0.2s; }
         .steam-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(110, 58, 255, 0.6); }
-
         .steam-bio-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #66c0f4; }
         .steam-bio-text { font-size: 1rem; line-height: 1.6; color: #acb2b8; white-space: pre-wrap; }
+        @media (max-width: 768px) { .steam-body { flex-direction: column; } .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; } .steam-title { text-align: center; font-size: 2rem; } .steam-play-btn { display: block; text-align: center; } }
 
-        @media (max-width: 768px) {
-            .steam-body { flex-direction: column; }
-            .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; }
-            .steam-title { text-align: center; font-size: 2rem; }
-            .steam-play-btn { display: block; text-align: center; }
+        /* --- BOTÃO MULTIPLAYER SECRETO --- */
+        #btn-online-multiplayer {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.5);
+            z-index: 10000;
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        /* Modal Sobre o Site (Simples) */
-        .about-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .about-content { background-color: #fff; color: #333; margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; }
-        .close-about { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; }
-
+        #btn-online-multiplayer:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.7); }
+        @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -181,9 +198,12 @@
         <i class="fas fa-gamepad"></i> Seja Bem-vindo! Temos <span id="game-count">0</span> jogos disponíveis!
     </div>
 
-    <div class="about-btn-container">
+    <div class="header-buttons">
         <button class="btn-about" onclick="toggleAbout(true)">
             <i class="fas fa-info-circle"></i> Sobre O Site
+        </button>
+        <button class="btn-about btn-settings" onclick="toggleSettings(true)">
+            <i class="fas fa-cog"></i> Configurações
         </button>
     </div>
 
@@ -194,19 +214,17 @@
     <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
 
     <div id="game-grid">
-        <p style="color: black; grid-column: 1/-1; text-align: center;" id="loading">
+        <p style="color: var(--text-color); grid-column: 1/-1; text-align: center;" id="loading">
             <i class="fas fa-spinner fa-spin"></i> Conectando ao GitHub...
         </p>
     </div>
 
     <div id="steamModal" class="steam-modal">
         <div id="steamBg" class="steam-bg-blur"></div>
-        
         <div class="steam-container">
             <div class="steam-nav">
                 <button class="btn-back" onclick="closeSteam()"><i class="fas fa-arrow-left"></i> VOLTAR</button>
             </div>
-            
             <div class="steam-body">
                 <div class="steam-cover-box">
                     <img id="steamCover" src="" alt="Capa">
@@ -214,7 +232,6 @@
                 <div class="steam-info-box">
                     <h1 id="steamTitle">Nome do Jogo</h1>
                     <a id="steamPlayBtn" href="#" class="steam-play-btn"><i class="fas fa-play"></i> JOGAR AGORA</a>
-                    
                     <div class="steam-bio-box">
                         <div style="color:#66c0f4; font-weight:bold; margin-bottom:10px;">SOBRE ESTE JOGO:</div>
                         <div id="steamBio" class="steam-bio-text">Carregando...</div>
@@ -234,22 +251,103 @@
         </div>
     </div>
 
+    <div id="settingsModal" class="about-modal" onclick="if(event.target == this) toggleSettings(false)">
+        <div class="about-content">
+            <span class="close-about" onclick="toggleSettings(false)">&times;</span>
+            <h2>⚙️ Configurações</h2>
+            
+            <div style="margin-top: 20px;">
+                <strong>🎨 Escolha o Tema:</strong>
+                <div class="theme-buttons">
+                    <button class="theme-btn t-classic" onclick="mudarTema('classic')">Clássico</button>
+                    <button class="theme-btn t-dark" onclick="mudarTema('dark')">Escuro</button>
+                    <button class="theme-btn t-light" onclick="mudarTema('light')">Claro</button>
+                </div>
+            </div>
+
+            <div class="toggle-container">
+                <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
+                <label for="toggleOnlineCb"><strong>🌐 Mostrar atalho de Jogos Online</strong></label>
+            </div>
+            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">*O atalho é liberado automaticamente após 5 min de jogatina.</p>
+        </div>
+    </div>
+
+    <a href="yr.html" id="btn-online-multiplayer">
+        <i class="fas fa-globe"></i> Jogar Online 🎮
+    </a>
+
 <script>
-    // --- CONFIGURAÇÃO ---
+    // --- CONFIGURAÇÃO GITHUB ---
     const USER = 'gustavotedeski2-create';
     const REPO = 'PatoPlayerGamez';
     const FOLDER = 'games'; 
     const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
 
-    // --- FUNÇÕES DE MODAL ---
-    function toggleAbout(show) {
-        document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none';
+    // --- FUNÇÕES DE MODAIS ---
+    function toggleAbout(show) { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
+    function toggleSettings(show) { document.getElementById('settingsModal').style.display = show ? 'block' : 'none'; }
+    function closeSteam() { document.getElementById('steamModal').style.display = 'none'; }
+
+    // --- TEMAS E CONFIGURAÇÕES ---
+    function mudarTema(tema) {
+        document.body.classList.remove('theme-dark', 'theme-light');
+        if (tema === 'dark') document.body.classList.add('theme-dark');
+        if (tema === 'light') document.body.classList.add('theme-light');
+        localStorage.setItem('patoPlayerTheme', tema);
     }
 
-    function closeSteam() {
-        document.getElementById('steamModal').style.display = 'none';
+    function alternarBotaoOnlineManual(mostrar) {
+        const btn = document.getElementById('btn-online-multiplayer');
+        if (mostrar) {
+            btn.style.setProperty('display', 'inline-block', 'important');
+            localStorage.setItem('patoOnlineLiberado', 'true');
+        } else {
+            btn.style.setProperty('display', 'none', 'important');
+            localStorage.setItem('patoOnlineLiberado', 'false');
+        }
     }
 
+    function carregarConfiguracoesSalvas() {
+        const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
+        mudarTema(temaSalvo);
+
+        const onlineLiberado = localStorage.getItem('patoOnlineLiberado') === 'true';
+        document.getElementById('toggleOnlineCb').checked = onlineLiberado;
+        if (onlineLiberado) {
+            document.getElementById('btn-online-multiplayer').style.setProperty('display', 'inline-block', 'important');
+        }
+    }
+
+    // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
+    function iniciarCronometroJogatina() {
+        const TEMPO_NECESSARIO = 300; // 300 seg = 5 min. Para testar rápido, mude para 5.
+        const btnOnline = document.getElementById('btn-online-multiplayer');
+        const checkboxOnline = document.getElementById('toggleOnlineCb');
+        let tempoGasto = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
+
+        const desbloquearOnline = () => {
+            btnOnline.style.setProperty('display', 'inline-block', 'important');
+            checkboxOnline.checked = true;
+            localStorage.setItem('patoOnlineLiberado', 'true');
+        };
+
+        if (tempoGasto >= TEMPO_NECESSARIO) {
+            desbloquearOnline();
+        } else {
+            const timer = setInterval(() => {
+                tempoGasto++;
+                localStorage.setItem('tempoPatoPlayer', tempoGasto);
+                if (tempoGasto === TEMPO_NECESSARIO) {
+                    desbloquearOnline();
+                    alert("Você jogou por 5 minutos! O atalho para jogos online foi desbloqueado. Divirta-se jogando com seus amigos! 🎉");
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }
+    }
+
+    // --- DETALHES DA STEAM ---
     async function openSteamDetails(title, imgUrl, playUrl, bioUrl) {
         const modal = document.getElementById('steamModal');
         const sBg = document.getElementById('steamBg');
@@ -258,7 +356,6 @@
         const sPlay = document.getElementById('steamPlayBtn');
         const sBio = document.getElementById('steamBio');
 
-        // Configuração visual
         sTitle.innerText = title;
         sCover.src = imgUrl;
         sBg.style.backgroundImage = `url('${imgUrl}')`;
@@ -282,7 +379,7 @@
         }
     }
 
-    // --- CARREGAMENTO ---
+    // --- CARREGAMENTO DO GITHUB ---
     async function loadGames() {
         try {
             const response = await fetch(API_URL);
@@ -338,8 +435,152 @@
             document.getElementById('loading').innerText = 'Erro ao carregar jogos.';
         }
     }
-    loadGames();
+
+    // --- INICIALIZAR TUDO AO ABRIR O SITE ---
+    window.addEventListener('DOMContentLoaded', () => {
+        carregarConfiguracoesSalvas();
+        iniciarCronometroJogatina();
+        loadGames();
+    });
+
+    
 </script>
 
 </body>
+<div id="pato-ad-container" style="display: none;">
+    <div class="ad-close-btn" onclick="closeAd()">×</div>
+    <a id="pato-ad-link" href="#" target="_blank">
+        <img id="pato-ad-img" src="" alt="Publicidade">
+    </a>
+    <div class="ad-badge">Publicidade</div>
+</div>
+
+<style>
+    /* Estilo do Anúncio Flutuante */
+    #pato-ad-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 300px; /* Largura do anúncio */
+        height: auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        z-index: 9999; /* Fica na frente de tudo */
+        overflow: hidden;
+        border: 2px solid #6e3aff; /* Borda roxa */
+        animation: slideIn 0.5s ease-out;
+        cursor: pointer;
+
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(120%); }
+        to { transform: translateX(0); }
+    }
+
+    #pato-ad-img {
+        width: 100%;
+        display: block;
+        border-radius: 8px;
+    }
+
+    .ad-close-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        width: 20px;
+        height: 20px;
+        text-align: center;
+        line-height: 18px;
+        border-radius: 50%;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 10;
+        font-weight: bold;
+    }
+    
+    .ad-close-btn:hover { background: red; }
+
+    .ad-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: #ffdd40;
+        color: #8a6d3b;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-top-left-radius: 8px;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    // --- CONFIGURAÇÃO DOS ADS ---
+    const AD_USER = 'gustavotedeski2-create';
+    const AD_REPO = 'PatoPlayerGamez';
+    const AD_FOLDER = 'ads'; 
+    const TEMPO_PARA_APARECER = 1500; // 1.5 segundos (em milissegundos)
+
+    async function loadPatoAds() {
+        const adContainer = document.getElementById('pato-ad-container');
+        const adImg = document.getElementById('pato-ad-img');
+        const adLink = document.getElementById('pato-ad-link');
+
+        try {
+            // 1. Pega a lista de pastas dentro de 'ads'
+            const apiUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}`;
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) return; // Se não tiver pasta ads, não faz nada
+            
+            const data = await response.json();
+            
+            // Filtra só o que for pasta
+            const adFolders = data.filter(item => item.type === 'dir');
+            
+            if (adFolders.length === 0) return;
+
+            // 2. Escolhe um anúncio aleatório
+            const randomAd = adFolders[Math.floor(Math.random() * adFolders.length)];
+            
+            // 3. Pega o conteúdo dessa pasta escolhida
+            const adContentUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}/${randomAd.name}`;
+            const contentResponse = await fetch(adContentUrl);
+            const contentData = await contentResponse.json();
+
+            // 4. Acha a imagem e o link.txt
+            const imageFile = contentData.find(f => f.name.match(/\.(png|jpg|jpeg|gif)$/i));
+            const linkFile = contentData.find(f => f.name === 'link.txt');
+
+            if (imageFile && linkFile) {
+                // Define a imagem
+                adImg.src = imageFile.download_url;
+
+                // Lê o link dentro do txt
+                const linkResponse = await fetch(linkFile.download_url);
+                const linkText = await linkResponse.text();
+                adLink.href = linkText.trim(); // Remove espaços extras
+
+                // 5. Mostra o anúncio depois de 1.5 segundos
+                setTimeout(() => {
+                    adContainer.style.display = 'block';
+                }, TEMPO_PARA_APARECER);
+            }
+
+        } catch (error) {
+            console.error("Erro ao carregar anúncio:", error);
+        }
+    }
+
+    function closeAd() {
+        document.getElementById('pato-ad-container').style.display = 'none';
+    }
+
+    // Inicia o sistema
+    loadPatoAds();
+
+</script>
 </html>
