@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Editor HTML Real-time</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #2c3e50;
+        }
+
+        header {
+            padding: 10px 20px;
+            color: white;
+            background: #1a252f;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        textarea, iframe {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        /* Lado do Código */
+        textarea {
+            background: #282c34;
+            color: #abb2bf;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: none;
+            border-right: 2px solid #1a252f;
+        }
+
+        /* Lado do Resultado */
+        iframe {
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+<header>Editor HTML Interativo</header>
+
+<div class="container">
+    <textarea id="codigo" placeholder="Digite seu HTML/CSS aqui..."></textarea>
+    
+    <iframe id="preview"></iframe>
+</div>
+
+<script>
+    const textarea = document.getElementById('codigo');
+    const iframe = document.getElementById('preview');
+
+    // Função que atualiza o iframe com o conteúdo do textarea
+    function atualizar() {
+        const conteudo = textarea.value;
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(conteudo);
+        doc.close();
+    }
+
+    // Escuta cada tecla digitada
+    textarea.addEventListener('input', atualizar);
+
+    // Texto inicial padrão
+    textarea.value = `<h1>Olá Mundo!</h1>\n<p>Comece a editar para ver o resultado ao lado.</p>\n<style>\n  h1 { color: #3498db; }\n</style>`;
+    atualizar();
+</script>
+
+</body>
+</html>
