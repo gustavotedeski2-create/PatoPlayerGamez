@@ -110,6 +110,10 @@
 
         /* --- GRID DE JOGOS --- */
         .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .category-filter { max-width: 1200px; margin: 0 auto 20px; padding: 0 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .category-chip { border: none; background: rgba(255,255,255,0.25); color: var(--text-color); padding: 8px 16px; border-radius: 999px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .category-chip:hover { transform: translateY(-2px); }
+        .category-chip.active { background: var(--primary-btn); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
         
         .game-card { 
@@ -213,6 +217,8 @@
 
     <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
 
+    <div id="category-filter" class="category-filter"></div>
+
     <div id="game-grid">
         <p style="color: var(--text-color); grid-column: 1/-1; text-align: center;" id="loading">
             <i class="fas fa-spinner fa-spin"></i> Conectando ao GitHub...
@@ -246,9 +252,7 @@
             <span class="close-about" onclick="toggleAbout(false)">&times;</span>
             <h2>📖 Sobre O Site 🎮</h2>
             <p>Bem-vindo ao <b>Cadê Ação Play!</b></p>
-            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo Patinho, e com inteligencias artificiais como a do google</b>. Obrigado por jogar! 🦆💙</p>
-            <p>🧨O que é esse site? uma coletania de jogos online e offline, criados todos com IA e feitos pra você se divertir muito!</p>
-            <p>🚀 <b>Como Jogar:</b> Clique em qualquer jogo para ver detalhes e jogar. Alguns jogos possuem modo multiplayer online, Habilite nas configurações o atalho e basta clicar no botão "Jogar Online" dentro do jogo para desafiar seus amigos! 🎉</p>
+            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo <b>Patinho (Gustavo)</b>. Obrigado por jogar! 🦆💙</p>
             <p style="text-align:center; margin-top:20px; font-weight:bold;">Divirta-se! 🎉</p>
         </div>
     </div>
@@ -269,23 +273,25 @@
 
             <div class="toggle-container">
                 <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
-                <label for="toggleOnlineCb"><strong>🌐 Habilitar atalho de Jogos Online</strong></label>
+                <label for="toggleOnlineCb"><strong>🌐 Mostrar atalho de Jogos Online</strong></label>
             </div>
             <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">*O atalho é liberado automaticamente após 5 min de jogatina.</p>
         </div>
     </div>
 
     <a href="yr.html" id="btn-online-multiplayer">
-        <i class="fas fa-globe"></i> Clique Aqui Para Jogar Online! 🎮
+        <i class="fas fa-globe"></i> Jogar Online 🎮
     </a>
 
-<Script>
-
-// --- CONFIGURAÇÃO GITHUB ---
+<script>
+    // --- CONFIGURAÇÃO GITHUB ---
     const USER = 'gustavotedeski2-create';
     const REPO = 'PatoPlayerGamez';
     const FOLDER = 'games'; 
     const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+    const DEFAULT_CATEGORY = 'Aventura';
+    const CATEGORY_FALLBACKS = ['Ação', 'Aventura', 'Corrida', 'Tiro', 'Sobrevivência', 'RPG', 'Simulação', 'Arcade', 'Puzzle', 'Multiplayer', 'Terror'];
+    let allGames = [];
 
     // --- FUNÇÕES DE MODAIS ---
     function toggleAbout(show) { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
@@ -343,7 +349,7 @@
                 localStorage.setItem('tempoPatoPlayer', tempoGasto);
                 if (tempoGasto === TEMPO_NECESSARIO) {
                     desbloquearOnline();
-                    alert("Vimos que você jogou por 5 minutos no nosso site! O atalho de ativação automática do modo online foi habilitado, Aproveite! 🎉");
+                    alert("Você jogou por 5 minutos! O atalho para jogos online foi desbloqueado. Divirta-se jogando com seus amigos! 🎉");
                     clearInterval(timer);
                 }
             }, 1000);
@@ -382,13 +388,92 @@
         }
     }
 
+    // --- CATEGORIAS ---
+    function normalizeCategoryName(category) {
+        if (!category) return DEFAULT_CATEGORY;
+        const clean = category.trim().replace(/\s+/g, ' ');
+        if (!clean) return DEFAULT_CATEGORY;
+        return clean
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    }
+
+    function parseCategoriesFromText(text) {
+        if (!text) return [DEFAULT_CATEGORY];
+
+        const categories = text
+            .split(/\n|,|;|\|/)
+            .map(normalizeCategoryName)
+            .filter(Boolean);
+
+        return categories.length ? [...new Set(categories)] : [DEFAULT_CATEGORY];
+    }
+
+    function createGameCard(game) {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.onclick = () => openSteamDetails(game.title, game.thumbUrl, game.playUrl, game.bioUrl);
+
+        const badge = game.isFolder ? '<div class="badge-game">GAME</div>' : '';
+
+        card.innerHTML = `
+            ${badge}
+            <img src="${game.thumbUrl}" onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${game.title}'" alt="${game.title}">
+            <h3>${game.title}</h3>
+            <span class="btn-play-card" onclick="event.stopPropagation(); window.location='${game.playUrl}'">JOGAR</span>
+        `;
+
+        return card;
+    }
+
+    function renderGamesByCategory(category) {
+        const grid = document.getElementById('game-grid');
+        grid.innerHTML = '';
+
+        const filteredGames = category === 'Todos os jogos'
+            ? allGames
+            : allGames.filter(game => game.categories.includes(category));
+
+        if (filteredGames.length === 0) {
+            grid.innerHTML = `<p style="color: var(--text-color); grid-column: 1/-1; text-align: center;">Nenhum jogo encontrado nesta categoria.</p>`;
+            return;
+        }
+
+        filteredGames.forEach(game => grid.appendChild(createGameCard(game)));
+    }
+
+    function renderCategoryFilters() {
+        const filterContainer = document.getElementById('category-filter');
+        const categoriesFromGames = [...new Set(allGames.flatMap(game => game.categories))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        const allCategories = ['Todos os jogos', ...CATEGORY_FALLBACKS, ...categoriesFromGames];
+        const uniqueCategories = [...new Set(allCategories)];
+
+        filterContainer.innerHTML = '';
+
+        uniqueCategories.forEach((category, index) => {
+            const btn = document.createElement('button');
+            btn.className = `category-chip${index === 0 ? ' active' : ''}`;
+            btn.innerText = category;
+            btn.onclick = () => {
+                filterContainer.querySelectorAll('.category-chip').forEach(chip => chip.classList.remove('active'));
+                btn.classList.add('active');
+                renderGamesByCategory(category);
+            };
+            filterContainer.appendChild(btn);
+        });
+    }
+
     // --- CARREGAMENTO DO GITHUB ---
     async function loadGames() {
+        const grid = document.getElementById('game-grid');
+        const loading = document.getElementById('loading');
+
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
-            const grid = document.getElementById('game-grid');
-            document.getElementById('loading').style.display = 'none';
+
+            if (loading) loading.style.display = 'none';
 
             const items = data.filter(item => {
                 const isFolder = item.type === 'dir' && (item.name.endsWith('.game') || item.name.endsWith('.games'));
@@ -396,46 +481,69 @@
                 return isFolder || isHtml;
             });
 
-            document.getElementById('game-count').innerText = items.length;
+            const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
+            allGames = [];
 
             for (const item of items) {
                 let gameTitle, thumbUrl, playUrl, bioUrl;
-                const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
+                let categories = [DEFAULT_CATEGORY];
+                const isFolder = item.type === 'dir';
 
-                if (item.type === 'dir') {
+                if (isFolder) {
                     gameTitle = item.name.replace(/\.games?$/i, '').replace(/-/g, ' ');
                     thumbUrl = `${baseUrl}/${item.name}/cover.png`;
-                    bioUrl = `${baseUrl}/${item.name}/bio.txt`; 
-                    
+                    bioUrl = `${baseUrl}/${item.name}/bio.txt`;
+
                     try {
-                        const fRes = await fetch(item.url);
-                        const fData = await fRes.json();
-                        const htmlFile = fData.find(f => f.name.endsWith('.html'));
+                        const folderResponse = await fetch(item.url);
+                        const folderData = await folderResponse.json();
+                        const htmlFile = folderData.find(f => f.name.endsWith('.html'));
+                        const categoryFile = folderData.find(f => f.name.toLowerCase() === 'category.txt');
+
                         playUrl = htmlFile ? `${baseUrl}/${item.name}/${htmlFile.name}` : '#';
-                    } catch { playUrl = '#'; }
+
+                        if (categoryFile?.download_url) {
+                            try {
+                                const categoryResponse = await fetch(categoryFile.download_url);
+                                if (categoryResponse.ok) {
+                                    const categoryText = await categoryResponse.text();
+                                    categories = parseCategoriesFromText(categoryText);
+                                }
+                            } catch (err) {
+                                categories = [DEFAULT_CATEGORY];
+                            }
+                        }
+                    } catch {
+                        playUrl = '#';
+                    }
                 } else {
                     gameTitle = item.name.replace('.html', '').replace(/-/g, ' ');
                     thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameTitle}`;
                     playUrl = `${baseUrl}/${item.name}`;
                     bioUrl = null;
+                    categories = [DEFAULT_CATEGORY];
                 }
 
-                const card = document.createElement('div');
-                card.className = 'game-card';
-                card.onclick = () => openSteamDetails(gameTitle, thumbUrl, playUrl, bioUrl);
-
-                const badge = item.type === 'dir' ? '<div class="badge-game">GAME</div>' : '';
-
-                card.innerHTML = `
-                    ${badge}
-                    <img src="${thumbUrl}" onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameTitle}'" alt="${gameTitle}">
-                    <h3>${gameTitle}</h3>
-                    <span class="btn-play-card" onclick="event.stopPropagation(); window.location='${playUrl}'">JOGAR</span>
-                `;
-                grid.appendChild(card);
+                allGames.push({
+                    title: gameTitle,
+                    thumbUrl,
+                    playUrl,
+                    bioUrl,
+                    categories,
+                    isFolder
+                });
             }
+
+            document.getElementById('game-count').innerText = allGames.length;
+            renderCategoryFilters();
+            renderGamesByCategory('Todos os jogos');
         } catch (error) {
-            document.getElementById('loading').innerText = 'Erro ao carregar jogos.';
+            if (loading) {
+                loading.style.display = 'block';
+                loading.innerText = 'Erro ao carregar jogos.';
+            } else {
+                grid.innerHTML = `<p style="color: var(--text-color); grid-column: 1/-1; text-align: center;">Erro ao carregar jogos.</p>`;
+            }
         }
     }
 
@@ -587,4 +695,3 @@
 
 </script>
 </html>
-
