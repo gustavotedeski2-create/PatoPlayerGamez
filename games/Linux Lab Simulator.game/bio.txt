@@ -8,15 +8,4 @@ Gestão de Bancada: Receba ordens de serviço de diferentes perfis de clientes �
 
 Hardware Realista: Abra as máquinas, identifique componentes queimados (Fontes, SSDs, Memórias RAM) e faça substituições cirúrgicas para ganhar dinheiro e reputação.
 
-Vida de Streamer: Inicie transmissões pelo seu Virtual PC. Escolha temas como "Just Chatting", "Gaming" ou "Working". Interaja com o chat, responda comentários em tempo real e acumule doações e seguidores para crescer seu canal.
-
-Gestão de Negócios: Contrate funcionários, compre ferramentas avançadas e pule meses para ver seu lucro acumulado.
-
-💻 Destaques Técnicos
-Virtual PC Integrado: Um sistema operacional dentro do jogo onde você pode instalar o OBS Studio e até a Steam para desbloquear novos modos de gameplay.
-
-Sistema de Save Game: Nunca perca seu progresso! O jogo salva automaticamente sua fortuna, reputação e hardware instalado.
-
-Modo Livre: Quer apenas experimentar? O modo livre permite usar o terminal sem a pressão das ordens de serviço.
-
-Segredos de Dev: Explore comandos ocultos para desbloquear o "Modo Deus" (se você souber a senha secreta).
+Vida de Stre
