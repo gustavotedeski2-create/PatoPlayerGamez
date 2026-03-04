@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f5c000; 
+            --bg-color: #f5c000;
             --text-color: #ffffff;
             --card-bg: #ffffff;
             --card-text: #333333;
@@ -40,60 +40,60 @@
             --header-shadow: rgba(0,0,0,0.1);
         }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-color); 
-            margin: 0; 
-            padding: 0; 
-            padding-bottom: 50px; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 50px;
             transition: background-color 0.3s, color 0.3s;
         }
 
-        header { 
-            text-align: center; 
-            padding: 20px; 
+        header {
+            text-align: center;
+            padding: 20px;
             margin-top: 10px;
-            position: relative; 
+            position: relative;
             z-index: 10;
         }
-        
-        h1 { 
-            font-size: 2.5rem; 
-            margin: 0; 
-            text-shadow: 2px 2px 0px var(--header-shadow); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 2px 2px 0px var(--header-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
-        .green-banner { 
-            background-color: var(--green-banner); 
-            color: white; 
-            text-align: center; 
-            padding: 15px; 
-            margin: 10px 20px; 
-            border-radius: 10px; 
-            font-weight: 500; 
-            box-shadow: 0 4px 0 #4cae4c; 
+        .green-banner {
+            background-color: var(--green-banner);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            box-shadow: 0 4px 0 #4cae4c;
         }
 
         .header-buttons { display: flex; justify-content: center; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
-        
-        .btn-about { 
-            background: #fd79a8; 
-            border: none; 
-            padding: 10px 25px; 
-            border-radius: 8px; 
-            color: white; 
-            font-weight: bold; 
-            cursor: pointer; 
+
+        .btn-about {
+            background: #fd79a8;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
             font-size: 1rem;
-            box-shadow: 0 4px 0 #e84393; 
-            transition: 0.2s; 
+            box-shadow: 0 4px 0 #e84393;
+            transition: 0.2s;
         }
         .btn-about:active { transform: translateY(3px); box-shadow: none; }
         .btn-settings { background: #0984e3; box-shadow: 0 4px 0 #076bb8; }
@@ -103,24 +103,27 @@
         .chat-banner:hover { transform: scale(1.02); background-color: #00cea5; }
 
         .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #featured-container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+        .featured-card { min-height: 280px; }
+        .featured-card img { height: 200px; }
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
-        
-        .game-card { 
-            background: var(--card-bg); 
+
+        .game-card {
+            background: var(--card-bg);
             color: var(--card-text);
-            border-radius: 15px; 
-            padding: 10px; 
-            text-align: center; 
-            transition: transform 0.2s, background 0.3s, color 0.3s; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            display: flex; flex-direction: column; 
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.2s, background 0.3s, color 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column;
             position: relative;
             cursor: pointer;
         }
         .game-card:hover { transform: translateY(-5px); }
         .game-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; background-color: #ddd; }
         .game-card h3 { font-size: 1.1rem; margin: 15px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
-        
+
         .btn-play-card { background: var(--primary-btn); color: white; text-decoration: none; padding: 8px; border-radius: 8px; display: block; font-weight: bold; margin-top: auto; }
         .badge-game { position: absolute; top: 15px; right: 15px; background: #ffdd40; color: #8a6d3b; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
@@ -234,6 +237,11 @@
         </select>
     </div>
 
+    <div class="section-title"><i class="fas fa-star"></i> Jogos em Destaque</div>
+    <div id="featured-container">
+        <div id="featured-game"></div>
+    </div>
+
     <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
 
     <div id="game-grid">
@@ -291,6 +299,13 @@
                     <button class="theme-btn t-light" onclick="mudarTema('light')">Claro</button>
                 </div>
             </div>
+            <div style="margin-top: 20px;">
+                <strong>📚 Ordem da biblioteca:</strong>
+                <select id="order-mode-select" onchange="mudarOrdemJogos(this.value)" style="margin-top: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--primary-btn); background: var(--card-bg); color: var(--card-text); font-weight: bold; cursor: pointer;">
+                    <option value="predefined">Predefinida</option>
+                    <option value="random">Aleatória</option>
+                </select>
+            </div>
             <div class="toggle-container">
                 <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
                 <label for="toggleOnlineCb"><strong>🌐 Habilitar atalho de Jogos Online</strong></label>
@@ -343,6 +358,12 @@
             }
         }
 
+        function mudarOrdemJogos(mode) {
+            gameOrderMode = mode === 'random' ? 'random' : 'predefined';
+            localStorage.setItem('patoGameOrderMode', gameOrderMode);
+            filterGames();
+        }
+
         function carregarConfiguracoesSalvas() {
             const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
             mudarTema(temaSalvo);
@@ -352,6 +373,10 @@
             if (onlineLiberado) {
                 document.getElementById('btn-online-multiplayer').style.setProperty('display', 'inline-block', 'important');
             }
+
+            const ordemSalva = localStorage.getItem('patoGameOrderMode') || 'predefined';
+            gameOrderMode = ordemSalva === 'random' ? 'random' : 'predefined';
+            document.getElementById('order-mode-select').value = gameOrderMode;
         }
 
         // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
@@ -409,6 +434,7 @@
         }
 
         let allGamesData = [];
+        let gameOrderMode = 'predefined';
 
         async function loadGames() {
             try {
@@ -490,6 +516,7 @@
                     categorySelect.appendChild(option);
                 });
 
+                renderFeaturedGame(allGamesData);
                 renderGames(allGamesData);
 
             } catch (error) {
@@ -508,7 +535,9 @@
                 return;
             }
 
-            gamesList.forEach(game => {
+            const orderedGames = getOrderedGames(gamesList);
+
+            orderedGames.forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.onclick = () => openSteamDetails(game.gameTitle, game.thumbUrl, game.playUrl, game.bioUrl);
@@ -519,11 +548,11 @@
 
                 card.innerHTML = `
                     ${badge}
-                    <img src="${game.thumbUrl}" 
-                         onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(game.gameTitle)}'" 
+                    <img src="${game.thumbUrl}"
+                         onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(game.gameTitle)}'"
                          alt="${game.gameTitle}">
                     <h3>${game.gameTitle}</h3>
-                    <span class="btn-play-card" 
+                    <span class="btn-play-card"
                           onclick="event.stopPropagation(); window.location.href='${game.playUrl}'">
                         JOGAR
                     </span>
@@ -532,9 +561,69 @@
             });
         }
 
+        function renderFeaturedGame(gamesList) {
+            const featuredWrapper = document.getElementById('featured-game');
+            featuredWrapper.innerHTML = '';
+
+            if (gamesList.length === 0) {
+                featuredWrapper.innerHTML = '<p style="text-align:center;">Sem jogos em destaque no momento.</p>';
+                return;
+            }
+
+            const featured = getDailyFeaturedGame(gamesList);
+            const card = document.createElement('div');
+            card.className = 'game-card featured-card';
+            card.onclick = () => openSteamDetails(featured.gameTitle, featured.thumbUrl, featured.playUrl, featured.bioUrl);
+
+            card.innerHTML = `
+                <div class="badge-game">DESTAQUE DO DIA</div>
+                <img src="${featured.thumbUrl}"
+                     onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(featured.gameTitle)}'"
+                     alt="${featured.gameTitle}">
+                <h3>${featured.gameTitle}</h3>
+                <span class="btn-play-card" onclick="event.stopPropagation(); window.location.href='${featured.playUrl}'">
+                    JOGAR AGORA
+                </span>
+            `;
+
+            featuredWrapper.appendChild(card);
+        }
+
+        function getOrderedGames(gamesList) {
+            if (gameOrderMode === 'random') {
+                return shuffleGames(gamesList);
+            }
+            return [...gamesList].sort((a, b) => a.gameTitle.localeCompare(b.gameTitle, 'pt-BR'));
+        }
+
+        function getDailyFeaturedGame(gamesList) {
+            const today = new Date().toISOString().slice(0, 10);
+            const seed = hashString(today);
+            return gamesList[seed % gamesList.length];
+        }
+
+        function hashString(text) {
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                hash = ((hash << 5) - hash) + text.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        function shuffleGames(gamesList) {
+            const shuffled = [...gamesList];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
         function filterGames() {
             const selected = document.getElementById('category-select').value;
             const filtered = selected === 'all' ? allGamesData : allGamesData.filter(g => g.categoria === selected);
+            renderFeaturedGame(filtered);
             renderGames(filtered);
         }
 
