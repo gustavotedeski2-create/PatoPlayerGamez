@@ -6,9 +6,7 @@
     <title>PatoPlayer Games 🦆</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* --- VARIÁVEIS DE TEMA --- */
         :root {
-            /* Tema Clássico (Padrão) */
             --bg-color: #f5c000; 
             --text-color: #ffffff;
             --card-bg: #ffffff;
@@ -16,7 +14,6 @@
             --modal-bg: #ffffff;
             --modal-text: #333333;
             --header-shadow: rgba(0,0,0,0.1);
-            
             --steam-dark: #1b2838;
             --steam-panel: #171a21;
             --primary-btn: #6e3aff;
@@ -43,7 +40,6 @@
             --header-shadow: rgba(0,0,0,0.1);
         }
 
-        /* --- BASE DO SITE --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: var(--bg-color); 
@@ -54,7 +50,6 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- CABEÇALHO --- */
         header { 
             text-align: center; 
             padding: 20px; 
@@ -75,7 +70,6 @@
 
         .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
-        /* --- BANNERS E BOTÕES --- */
         .green-banner { 
             background-color: var(--green-banner); 
             color: white; 
@@ -108,7 +102,6 @@
         .chat-banner { background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px; border-radius: 30px; text-align: center; color: white; font-weight: bold; box-shadow: 0 4px 0 #008e72; transition: transform 0.2s; }
         .chat-banner:hover { transform: scale(1.02); background-color: #00cea5; }
 
-        /* --- GRID DE JOGOS --- */
         .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
         
@@ -131,12 +124,10 @@
         .btn-play-card { background: var(--primary-btn); color: white; text-decoration: none; padding: 8px; border-radius: 8px; display: block; font-weight: bold; margin-top: auto; }
         .badge-game { position: absolute; top: 15px; right: 15px; background: #ffdd40; color: #8a6d3b; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        /* --- MODAIS COMUNS (SOBRE E CONFIGURAÇÕES) --- */
         .about-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
         .about-content { background-color: var(--modal-bg); color: var(--modal-text); margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; transition: background 0.3s, color 0.3s;}
         .close-about { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; }
 
-        /* --- ESTILOS INTERNOS DE CONFIGURAÇÕES --- */
         .theme-buttons { display: flex; gap: 10px; margin-top: 10px; }
         .theme-btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s;}
         .theme-btn:hover { transform: scale(1.05); }
@@ -146,7 +137,6 @@
         .toggle-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; background: rgba(128,128,128,0.1); padding: 15px; border-radius: 10px;}
         .toggle-container input { width: 20px; height: 20px; cursor: pointer; }
 
-        /* --- MODAL ESTILO STEAM --- */
         .steam-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: #171a21; overflow-y: auto; }
         .steam-bg-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.5); z-index: -1; transition: background-image 0.5s; }
         .steam-container { max-width: 900px; margin: 40px auto; background: rgba(23, 26, 33, 0.95); border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column; color: #c6d4df; border: 1px solid rgba(255,255,255,0.1); animation: slideUp 0.3s ease-out; }
@@ -165,9 +155,8 @@
         .steam-bio-text { font-size: 1rem; line-height: 1.6; color: #acb2b8; white-space: pre-wrap; }
         @media (max-width: 768px) { .steam-body { flex-direction: column; } .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; } .steam-title { text-align: center; font-size: 2rem; } .steam-play-btn { display: block; text-align: center; } }
 
-        /* --- BOTÃO MULTIPLAYER SECRETO --- */
         #btn-online-multiplayer {
-            display: none; /* Escondido por padrão */
+            display: none;
             position: fixed;
             bottom: 30px;
             right: 30px;
@@ -185,6 +174,29 @@
         }
         #btn-online-multiplayer:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.7); }
         @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Estilo do Anúncio Flutuante */
+        #pato-ad-container {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            height: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            z-index: 9999999999;
+            overflow: hidden;
+            border: 2px solid #6e3aff;
+            animation: slideIn 0.5s ease-out;
+            cursor: pointer;
+        }
+        @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+        #pato-ad-img { width: 100%; display: block; border-radius: 8px; }
+        .ad-close-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; width: 20px; height: 20px; text-align: center; line-height: 18px; border-radius: 50%; font-size: 14px; cursor: pointer; z-index: 10; font-weight: bold; }
+        .ad-close-btn:hover { background: red; }
+        .ad-badge { position: absolute; bottom: 0; right: 0; background: #ffdd40; color: #8a6d3b; font-size: 10px; padding: 2px 6px; border-top-left-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -211,16 +223,16 @@
         <div class="chat-banner"><i class="fas fa-comment-dots"></i> Fale com a gente no Chat Online!</div>
     </a>
 
-<a href="https://forms.gle/kT61Qy2ZAeoCWciJ6" target="_blank" class="chat-link">
+    <a href="https://forms.gle/kT61Qy2ZAeoCWciJ6" target="_blank" class="chat-link">
         <div class="chat-banner"><i class="fas fa-comment-dots"></i> Fale Conosco E Envie Seu Feedback!</div>
     </a>
 
     <div id="category-filter-container" style="text-align: center; margin: 20px 0; display:none;">
-    <strong style="margin-right: 10px;"><i class="fas fa-filter"></i> Filtrar por:</strong>
-    <select id="category-select" onchange="filterGames()" style="padding: 10px; border-radius: 8px; border: 2px solid var(--primary-btn); background: var(--card-bg); color: var(--card-text); font-weight: bold; cursor: pointer;">
-        <option value="all">Todos os Jogos</option>
-    </select>
-</div>
+        <strong style="margin-right: 10px;"><i class="fas fa-filter"></i> Filtrar por:</strong>
+        <select id="category-select" onchange="filterGames()" style="padding: 10px; border-radius: 8px; border: 2px solid var(--primary-btn); background: var(--card-bg); color: var(--card-text); font-weight: bold; cursor: pointer;">
+            <option value="all">Todos os Jogos</option>
+        </select>
+    </div>
 
     <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
 
@@ -230,6 +242,7 @@
         </p>
     </div>
 
+    <!-- Modal Steam -->
     <div id="steamModal" class="steam-modal">
         <div id="steamBg" class="steam-bg-blur"></div>
         <div class="steam-container">
@@ -241,7 +254,7 @@
                     <img id="steamCover" src="" alt="Capa">
                 </div>
                 <div class="steam-info-box">
-                    <h1 id="steamTitle">Nome do Jogo</h1>
+                    <h1 id="steamTitle" class="steam-title">Nome do Jogo</h1>
                     <a id="steamPlayBtn" href="#" class="steam-play-btn"><i class="fas fa-play"></i> JOGAR AGORA</a>
                     <div class="steam-bio-box">
                         <div style="color:#66c0f4; font-weight:bold; margin-bottom:10px;">SOBRE ESTE JOGO:</div>
@@ -252,23 +265,24 @@
         </div>
     </div>
 
+    <!-- Modal Sobre -->
     <div id="aboutSiteModal" class="about-modal" onclick="if(event.target == this) toggleAbout(false)">
         <div class="about-content">
             <span class="close-about" onclick="toggleAbout(false)">&times;</span>
             <h2>📖 Sobre O Site 🎮</h2>
             <p>Bem-vindo ao <b>Cadê Ação Play!</b></p>
-            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo Patinho, e com inteligencias artificiais como a do google</b>. Obrigado por jogar! 🦆💙</p>
-            <p>🧨O que é esse site? uma coletania de jogos online e offline, criados todos com IA e feitos pra você se divertir muito!</p>
-            <p>🚀 <b>Como Jogar:</b> Clique em qualquer jogo para ver detalhes e jogar. Alguns jogos possuem modo multiplayer online, Habilite nas configurações o atalho e basta clicar no botão "Jogar Online" dentro do jogo para desafiar seus amigos! 🎉</p>
+            <p>👨‍💻 <b>Sobre o Criador:</b> Feito pelo Patinho, e com inteligencias artificiais como a do google. Obrigado por jogar! 🦆💙</p>
+            <p>🧨 O que é esse site? Uma coletania de jogos online e offline, criados todos com IA e feitos pra você se divertir muito!</p>
+            <p>🚀 <b>Como Jogar:</b> Clique em qualquer jogo para ver detalhes e jogar. Alguns jogos possuem modo multiplayer online, habilite nas configurações o atalho e basta clicar no botão "Jogar Online" dentro do jogo para desafiar seus amigos! 🎉</p>
             <p style="text-align:center; margin-top:20px; font-weight:bold;">Divirta-se! 🎉</p>
         </div>
     </div>
 
+    <!-- Modal Configurações -->
     <div id="settingsModal" class="about-modal" onclick="if(event.target == this) toggleSettings(false)">
         <div class="about-content">
             <span class="close-about" onclick="toggleSettings(false)">&times;</span>
             <h2>⚙️ Configurações</h2>
-            
             <div style="margin-top: 20px;">
                 <strong>🎨 Escolha o Tema:</strong>
                 <div class="theme-buttons">
@@ -277,7 +291,6 @@
                     <button class="theme-btn t-light" onclick="mudarTema('light')">Claro</button>
                 </div>
             </div>
-
             <div class="toggle-container">
                 <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
                 <label for="toggleOnlineCb"><strong>🌐 Habilitar atalho de Jogos Online</strong></label>
@@ -290,350 +303,289 @@
         <i class="fas fa-globe"></i> Clique Aqui Para Jogar Online! 🎮
     </a>
 
-<Script>
+    <!-- Anúncio Flutuante -->
+    <div id="pato-ad-container">
+        <div class="ad-close-btn" onclick="closeAd()">×</div>
+        <a id="pato-ad-link" href="#" target="_blank">
+            <img id="pato-ad-img" src="" alt="Publicidade">
+        </a>
+        <div class="ad-badge">Publicidade</div>
+    </div>
 
-// --- CONFIGURAÇÃO GITHUB ---
-    const USER = 'gustavotedeski2-create';
-    const REPO = 'PatoPlayerGamez';
-    const FOLDER = 'games'; 
-    const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+    <script>
+        // --- CONFIGURAÇÃO GITHUB ---
+        const USER = 'gustavotedeski2-create';
+        const REPO = 'PatoPlayerGamez';
+        const FOLDER = 'games';
+        const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
 
-    // --- FUNÇÕES DE MODAIS ---
-    function toggleAbout(show) { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
-    function toggleSettings(show) { document.getElementById('settingsModal').style.display = show ? 'block' : 'none'; }
-    function closeSteam() { document.getElementById('steamModal').style.display = 'none'; }
+        // --- FUNÇÕES DE MODAIS ---
+        function toggleAbout(show) { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
+        function toggleSettings(show) { document.getElementById('settingsModal').style.display = show ? 'block' : 'none'; }
+        function closeSteam() { document.getElementById('steamModal').style.display = 'none'; }
 
-    // --- TEMAS E CONFIGURAÇÕES ---
-    function mudarTema(tema) {
-        document.body.classList.remove('theme-dark', 'theme-light');
-        if (tema === 'dark') document.body.classList.add('theme-dark');
-        if (tema === 'light') document.body.classList.add('theme-light');
-        localStorage.setItem('patoPlayerTheme', tema);
-    }
-
-    function alternarBotaoOnlineManual(mostrar) {
-        const btn = document.getElementById('btn-online-multiplayer');
-        if (mostrar) {
-            btn.style.setProperty('display', 'inline-block', 'important');
-            localStorage.setItem('patoOnlineLiberado', 'true');
-        } else {
-            btn.style.setProperty('display', 'none', 'important');
-            localStorage.setItem('patoOnlineLiberado', 'false');
+        // --- TEMAS E CONFIGURAÇÕES ---
+        function mudarTema(tema) {
+            document.body.classList.remove('theme-dark', 'theme-light');
+            if (tema === 'dark') document.body.classList.add('theme-dark');
+            if (tema === 'light') document.body.classList.add('theme-light');
+            localStorage.setItem('patoPlayerTheme', tema);
         }
-    }
 
-    function carregarConfiguracoesSalvas() {
-        const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
-        mudarTema(temaSalvo);
-
-        const onlineLiberado = localStorage.getItem('patoOnlineLiberado') === 'true';
-        document.getElementById('toggleOnlineCb').checked = onlineLiberado;
-        if (onlineLiberado) {
-            document.getElementById('btn-online-multiplayer').style.setProperty('display', 'inline-block', 'important');
-        }
-    }
-
-    // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
-    function iniciarCronometroJogatina() {
-        const TEMPO_NECESSARIO = 300; // 300 seg = 5 min. Para testar rápido, mude para 5.
-        const btnOnline = document.getElementById('btn-online-multiplayer');
-        const checkboxOnline = document.getElementById('toggleOnlineCb');
-        let tempoGasto = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
-
-        const desbloquearOnline = () => {
-            btnOnline.style.setProperty('display', 'inline-block', 'important');
-            checkboxOnline.checked = true;
-            localStorage.setItem('patoOnlineLiberado', 'true');
-        };
-
-        if (tempoGasto >= TEMPO_NECESSARIO) {
-            desbloquearOnline();
-        } else {
-            const timer = setInterval(() => {
-                tempoGasto++;
-                localStorage.setItem('tempoPatoPlayer', tempoGasto);
-                if (tempoGasto === TEMPO_NECESSARIO) {
-                    desbloquearOnline();
-                    alert("Vimos que você jogou por 5 minutos no nosso site! O atalho de ativação automática do modo online foi habilitado, Aproveite! 🎉");
-                    clearInterval(timer);
-                }
-            }, 1000);
-        }
-    }
-
-    // --- DETALHES DA STEAM ---
-    async function openSteamDetails(title, imgUrl, playUrl, bioUrl) {
-        const modal = document.getElementById('steamModal');
-        const sBg = document.getElementById('steamBg');
-        const sTitle = document.getElementById('steamTitle');
-        const sCover = document.getElementById('steamCover');
-        const sPlay = document.getElementById('steamPlayBtn');
-        const sBio = document.getElementById('steamBio');
-
-        sTitle.innerText = title;
-        sCover.src = imgUrl;
-        sBg.style.backgroundImage = `url('${imgUrl}')`;
-        sPlay.href = playUrl;
-        sBio.innerHTML = 'Carregando informações...';
-
-        modal.style.display = 'block';
-
-        if (bioUrl) {
-            try {
-                const response = await fetch(bioUrl);
-                if (response.ok) {
-                    const text = await response.text();
-                    sBio.innerText = text;
-                } else {
-                    sBio.innerText = "Sem descrição disponível. Apenas divirta-se!";
-                }
-            } catch (err) { sBio.innerText = "Erro ao carregar bio."; }
-        } else {
-            sBio.innerText = "Este jogo não possui descrição detalhada.";
-        }
-    }
-
-   let allGamesData = []; // Cache para armazenar os jogos carregados
-
-async function loadGames() {
-    try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        const grid = document.getElementById('game-grid');
-        const categorySelect = document.getElementById('category-select');
-        const categories = new Set(); // Para armazenar categorias únicas
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('category-filter-container').style.display = 'block';
-
-        const items = data.filter(item => {
-            const isFolder = item.type === 'dir' && (item.name.endsWith('.game') || item.name.endsWith('.games'));
-            const isHtml = item.type === 'file' && item.name.endsWith('.html');
-            return isFolder || isHtml;
-        });
-
-        document.getElementById('game-count').innerText = items.length;
-
-        for (const item of items) {
-            let gameTitle, thumbUrl, playUrl, bioUrl, categoria = "Outros";
-            const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
-
-            if (item.type === 'dir') {
-                gameTitle = item.name.replace(/\.games?$/i, '').replace(/-/g, ' ');
-                thumbUrl = `${baseUrl}/${item.name}/cover.png`;
-                bioUrl = `${baseUrl}/${item.name}/bio.txt`; 
-                
-                // --- Lógica de Categoria .txt ---
-                try {
-                    const catRes = await fetch(`${baseUrl}/${item.name}/categoria.txt`);
-                    if (catRes.ok) {
-                        categoria = (await catRes.text()).trim();
-                    }
-                } catch (e) { categoria = "Ação"; } // Fallback
-
-                try {
-                    const fRes = await fetch(item.url);
-                    const fData = await fRes.json();
-                    const htmlFile = fData.find(f => f.name.endsWith('.html'));
-                    playUrl = htmlFile ? `${baseUrl}/${item.name}/${htmlFile.name}` : '#';
-                } catch { playUrl = '#'; }
+        function alternarBotaoOnlineManual(mostrar) {
+            const btn = document.getElementById('btn-online-multiplayer');
+            if (mostrar) {
+                btn.style.setProperty('display', 'inline-block', 'important');
+                localStorage.setItem('patoOnlineLiberado', 'true');
             } else {
-                gameTitle = item.name.replace('.html', '').replace(/-/g, ' ');
-                thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${gameTitle}`;
-                playUrl = `${baseUrl}/${item.name}`;
-                bioUrl = null;
+                btn.style.setProperty('display', 'none', 'important');
+                localStorage.setItem('patoOnlineLiberado', 'false');
             }
-
-            // Armazenar no array global para o filtro
-            const gameObj = { gameTitle, thumbUrl, playUrl, bioUrl, categoria, type: item.type };
-            allGamesData.push(gameObj);
-            categories.add(categoria);
         }
 
-        // Preencher o Select de Categorias
-        categories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.innerText = cat;
-            categorySelect.appendChild(option);
+        function carregarConfiguracoesSalvas() {
+            const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
+            mudarTema(temaSalvo);
+
+            const onlineLiberado = localStorage.getItem('patoOnlineLiberado') === 'true';
+            document.getElementById('toggleOnlineCb').checked = onlineLiberado;
+            if (onlineLiberado) {
+                document.getElementById('btn-online-multiplayer').style.setProperty('display', 'inline-block', 'important');
+            }
+        }
+
+        // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
+        function iniciarCronometroJogatina() {
+            const TEMPO_NECESSARIO = 300;
+            const btnOnline = document.getElementById('btn-online-multiplayer');
+            const checkboxOnline = document.getElementById('toggleOnlineCb');
+            let tempoGasto = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
+
+            const desbloquearOnline = () => {
+                btnOnline.style.setProperty('display', 'inline-block', 'important');
+                checkboxOnline.checked = true;
+                localStorage.setItem('patoOnlineLiberado', 'true');
+            };
+
+            if (tempoGasto >= TEMPO_NECESSARIO) {
+                desbloquearOnline();
+            } else {
+                const timer = setInterval(() => {
+                    tempoGasto++;
+                    localStorage.setItem('tempoPatoPlayer', tempoGasto);
+                    if (tempoGasto === TEMPO_NECESSARIO) {
+                        desbloquearOnline();
+                        alert("Vimos que você jogou por 5 minutos no nosso site! O atalho de ativação automática do modo online foi habilitado, Aproveite! 🎉");
+                        clearInterval(timer);
+                    }
+                }, 1000);
+            }
+        }
+
+        // --- DETALHES DA STEAM ---
+        async function openSteamDetails(title, imgUrl, playUrl, bioUrl) {
+            const modal = document.getElementById('steamModal');
+            document.getElementById('steamTitle').innerText = title;
+            document.getElementById('steamCover').src = imgUrl;
+            document.getElementById('steamBg').style.backgroundImage = `url('${imgUrl}')`;
+            document.getElementById('steamPlayBtn').href = playUrl;
+            document.getElementById('steamBio').innerHTML = 'Carregando informações...';
+            modal.style.display = 'block';
+
+            if (bioUrl) {
+                try {
+                    const response = await fetch(bioUrl);
+                    if (response.ok) {
+                        document.getElementById('steamBio').innerText = await response.text();
+                    } else {
+                        document.getElementById('steamBio').innerText = "Sem descrição disponível. Apenas divirta-se!";
+                    }
+                } catch (err) {
+                    document.getElementById('steamBio').innerText = "Erro ao carregar bio.";
+                }
+            } else {
+                document.getElementById('steamBio').innerText = "Este jogo não possui descrição detalhada.";
+            }
+        }
+
+        let allGamesData = [];
+
+        async function loadGames() {
+            try {
+                const response = await fetch(API_URL);
+
+                // ✅ CORREÇÃO: verifica se a resposta foi bem-sucedida
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const grid = document.getElementById('game-grid');
+                const categorySelect = document.getElementById('category-select');
+                const categories = new Set();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('category-filter-container').style.display = 'block';
+
+                // ✅ CORREÇÃO: aceita pastas com ou sem extensão .game/.games
+                const items = data.filter(item => {
+                    const isFolder = item.type === 'dir';
+                    const isHtml = item.type === 'file' && item.name.endsWith('.html');
+                    return isFolder || isHtml;
+                });
+
+                document.getElementById('game-count').innerText = items.length;
+
+                const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
+
+                // ✅ CORREÇÃO: usa Promise.all para carregar jogos em paralelo (mais rápido)
+                const promises = items.map(async (item) => {
+                    let gameTitle, thumbUrl, playUrl, bioUrl, categoria = "Outros";
+
+                    if (item.type === 'dir') {
+                        gameTitle = item.name.replace(/\.games?$/i, '').replace(/-/g, ' ');
+                        thumbUrl = `${baseUrl}/${item.name}/cover.png`;
+                        bioUrl = `${baseUrl}/${item.name}/bio.txt`;
+
+                        // Tenta ler categoria
+                        try {
+                            const catRes = await fetch(`${baseUrl}/${item.name}/categoria.txt`);
+                            if (catRes.ok) {
+                                categoria = (await catRes.text()).trim();
+                            }
+                        } catch (e) { /* mantém "Outros" */ }
+
+                        // Tenta achar o HTML dentro da pasta
+                        try {
+                            const fRes = await fetch(item.url);
+                            if (fRes.ok) {
+                                const fData = await fRes.json();
+                                const htmlFile = fData.find(f => f.name.endsWith('.html'));
+                                playUrl = htmlFile ? `${baseUrl}/${item.name}/${htmlFile.name}` : `${baseUrl}/${item.name}/index.html`;
+                            } else {
+                                playUrl = `${baseUrl}/${item.name}/index.html`;
+                            }
+                        } catch {
+                            playUrl = `${baseUrl}/${item.name}/index.html`;
+                        }
+
+                    } else {
+                        gameTitle = item.name.replace('.html', '').replace(/-/g, ' ');
+                        thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(gameTitle)}`;
+                        playUrl = `${baseUrl}/${item.name}`;
+                        bioUrl = null;
+                    }
+
+                    return { gameTitle, thumbUrl, playUrl, bioUrl, categoria, type: item.type };
+                });
+
+                allGamesData = await Promise.all(promises);
+
+                // Preenche categorias no select
+                allGamesData.forEach(g => categories.add(g.categoria));
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.innerText = cat;
+                    categorySelect.appendChild(option);
+                });
+
+                renderGames(allGamesData);
+
+            } catch (error) {
+                console.error('Erro ao carregar jogos:', error);
+                document.getElementById('loading').innerHTML =
+                    `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar jogos: ${error.message}`;
+            }
+        }
+
+        function renderGames(gamesList) {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+
+            if (gamesList.length === 0) {
+                grid.innerHTML = '<p style="grid-column:1/-1; text-align:center;">Nenhum jogo encontrado nesta categoria.</p>';
+                return;
+            }
+
+            gamesList.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => openSteamDetails(game.gameTitle, game.thumbUrl, game.playUrl, game.bioUrl);
+
+                const badge = game.type === 'dir'
+                    ? `<div class="badge-game">${game.categoria.toUpperCase()}</div>`
+                    : '';
+
+                card.innerHTML = `
+                    ${badge}
+                    <img src="${game.thumbUrl}" 
+                         onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(game.gameTitle)}'" 
+                         alt="${game.gameTitle}">
+                    <h3>${game.gameTitle}</h3>
+                    <span class="btn-play-card" 
+                          onclick="event.stopPropagation(); window.location.href='${game.playUrl}'">
+                        JOGAR
+                    </span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterGames() {
+            const selected = document.getElementById('category-select').value;
+            const filtered = selected === 'all' ? allGamesData : allGamesData.filter(g => g.categoria === selected);
+            renderGames(filtered);
+        }
+
+        // --- ADS ---
+        const AD_USER = 'gustavotedeski2-create';
+        const AD_REPO = 'PatoPlayerGamez';
+        const AD_FOLDER = 'ads';
+        const TEMPO_PARA_APARECER = 1500;
+
+        async function loadPatoAds() {
+            try {
+                const apiUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const adFolders = data.filter(item => item.type === 'dir');
+                if (adFolders.length === 0) return;
+
+                const randomAd = adFolders[Math.floor(Math.random() * adFolders.length)];
+                const contentResponse = await fetch(`https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}/${randomAd.name}`);
+                const contentData = await contentResponse.json();
+
+                const imageFile = contentData.find(f => f.name.match(/\.(png|jpg|jpeg|gif)$/i));
+                const linkFile = contentData.find(f => f.name === 'link.txt');
+
+                if (imageFile && linkFile) {
+                    document.getElementById('pato-ad-img').src = imageFile.download_url;
+                    const linkResponse = await fetch(linkFile.download_url);
+                    document.getElementById('pato-ad-link').href = (await linkResponse.text()).trim();
+
+                    setTimeout(() => {
+                        document.getElementById('pato-ad-container').style.display = 'block';
+                    }, TEMPO_PARA_APARECER);
+                }
+            } catch (error) {
+                console.error("Erro ao carregar anúncio:", error);
+            }
+        }
+
+        function closeAd() {
+            document.getElementById('pato-ad-container').style.display = 'none';
+        }
+
+        // ✅ CORREÇÃO PRINCIPAL: inicializa tudo quando a página carrega
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarConfiguracoesSalvas();
+            iniciarCronometroJogatina();
+            loadGames();
+            loadPatoAds();
         });
-
-        renderGames(allGamesData); // Renderiza todos inicialmente
-
-    } catch (error) {
-        document.getElementById('loading').innerText = 'Erro ao carregar jogos.';
-    }
-}
-
-function renderGames(gamesList) {
-    const grid = document.getElementById('game-grid');
-    grid.innerHTML = ''; // Limpa o grid
-
-    gamesList.forEach(game => {
-        const card = document.createElement('div');
-        card.className = 'game-card';
-        card.onclick = () => openSteamDetails(game.gameTitle, game.thumbUrl, game.playUrl, game.bioUrl);
-
-        const badge = game.type === 'dir' ? `<div class="badge-game">${game.categoria.toUpperCase()}</div>` : '';
-
-        card.innerHTML = `
-            ${badge}
-            <img src="${game.thumbUrl}" onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${game.gameTitle}'" alt="${game.gameTitle}">
-            <h3>${game.gameTitle}</h3>
-            <span class="btn-play-card" onclick="event.stopPropagation(); window.location='${game.playUrl}'">JOGAR</span>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-function filterGames() {
-    const selected = document.getElementById('category-select').value;
-    if (selected === 'all') {
-        renderGames(allGamesData);
-    } else {
-        const filtered = allGamesData.filter(g => g.categoria === selected);
-        renderGames(filtered);
-    }
-}
-    
-</script>
-
+    </script>
 </body>
-<div id="pato-ad-container" style="display: none;">
-    <div class="ad-close-btn" onclick="closeAd()">×</div>
-    <a id="pato-ad-link" href="#" target="_blank">
-        <img id="pato-ad-img" src="" alt="Publicidade">
-    </a>
-    <div class="ad-badge">Publicidade</div>
-</div>
-
-<style>
-    /* Estilo do Anúncio Flutuante */
-    #pato-ad-container {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        width: 300px; /* Largura do anúncio */
-        height: auto;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        z-index: 9999999999; /* Fica na frente de tudo */
-        overflow: hidden;
-        border: 2px solid #6e3aff; /* Borda roxa */
-        animation: slideIn 0.5s ease-out;
-        cursor: pointer;
-
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(120%); }
-        to { transform: translateX(0); }
-    }
-
-    #pato-ad-img {
-        width: 100%;
-        display: block;
-        border-radius: 8px;
-    }
-
-    .ad-close-btn {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        background: rgba(0,0,0,0.6);
-        color: white;
-        width: 20px;
-        height: 20px;
-        text-align: center;
-        line-height: 18px;
-        border-radius: 50%;
-        font-size: 14px;
-        cursor: pointer;
-        z-index: 10;
-        font-weight: bold;
-    }
-    
-    .ad-close-btn:hover { background: red; }
-
-    .ad-badge {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        background: #ffdd40;
-        color: #8a6d3b;
-        font-size: 10px;
-        padding: 2px 6px;
-        border-top-left-radius: 8px;
-        font-weight: bold;
-    }
-</style>
-
-<script>
-    // --- CONFIGURAÇÃO DOS ADS ---
-    const AD_USER = 'gustavotedeski2-create';
-    const AD_REPO = 'PatoPlayerGamez';
-    const AD_FOLDER = 'ads'; 
-    const TEMPO_PARA_APARECER = 1500; // 1.5 segundos (em milissegundos)
-
-    async function loadPatoAds() {
-        const adContainer = document.getElementById('pato-ad-container');
-        const adImg = document.getElementById('pato-ad-img');
-        const adLink = document.getElementById('pato-ad-link');
-
-        try {
-            // 1. Pega a lista de pastas dentro de 'ads'
-            const apiUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}`;
-            const response = await fetch(apiUrl);
-            
-            if (!response.ok) return; // Se não tiver pasta ads, não faz nada
-            
-            const data = await response.json();
-            
-            // Filtra só o que for pasta
-            const adFolders = data.filter(item => item.type === 'dir');
-            
-            if (adFolders.length === 0) return;
-
-            // 2. Escolhe um anúncio aleatório
-            const randomAd = adFolders[Math.floor(Math.random() * adFolders.length)];
-            
-            // 3. Pega o conteúdo dessa pasta escolhida
-            const adContentUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}/${randomAd.name}`;
-            const contentResponse = await fetch(adContentUrl);
-            const contentData = await contentResponse.json();
-
-            // 4. Acha a imagem e o link.txt
-            const imageFile = contentData.find(f => f.name.match(/\.(png|jpg|jpeg|gif)$/i));
-            const linkFile = contentData.find(f => f.name === 'link.txt');
-
-            if (imageFile && linkFile) {
-                // Define a imagem
-                adImg.src = imageFile.download_url;
-
-                // Lê o link dentro do txt
-                const linkResponse = await fetch(linkFile.download_url);
-                const linkText = await linkResponse.text();
-                adLink.href = linkText.trim(); // Remove espaços extras
-
-                // 5. Mostra o anúncio depois de 1.5 segundos
-                setTimeout(() => {
-                    adContainer.style.display = 'block';
-                }, TEMPO_PARA_APARECER);
-            }
-
-        } catch (error) {
-            console.error("Erro ao carregar anúncio:", error);
-        }
-    }
-
-    function closeAd() {
-        document.getElementById('pato-ad-container').style.display = 'none';
-    }
-
-    // Inicia o sistema
-    loadPatoAds();
-
-</script>
 </html>
-
