@@ -299,6 +299,13 @@
                     <button class="theme-btn t-light" onclick="mudarTema('light')">Claro</button>
                 </div>
             </div>
+            <div style="margin-top: 20px;">
+                <strong>📚 Ordem da biblioteca:</strong>
+                <select id="order-mode-select" onchange="mudarOrdemJogos(this.value)" style="margin-top: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--primary-btn); background: var(--card-bg); color: var(--card-text); font-weight: bold; cursor: pointer;">
+                    <option value="predefined">Predefinida</option>
+                    <option value="random">Aleatória</option>
+                </select>
+            </div>
             <div class="toggle-container">
                 <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
                 <label for="toggleOnlineCb"><strong>🌐 Habilitar atalho de Jogos Online</strong></label>
@@ -351,6 +358,12 @@
             }
         }
 
+        function mudarOrdemJogos(mode) {
+            gameOrderMode = mode === 'random' ? 'random' : 'predefined';
+            localStorage.setItem('patoGameOrderMode', gameOrderMode);
+            filterGames();
+        }
+
         function carregarConfiguracoesSalvas() {
             const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
             mudarTema(temaSalvo);
@@ -360,6 +373,10 @@
             if (onlineLiberado) {
                 document.getElementById('btn-online-multiplayer').style.setProperty('display', 'inline-block', 'important');
             }
+
+            const ordemSalva = localStorage.getItem('patoGameOrderMode') || 'predefined';
+            gameOrderMode = ordemSalva === 'random' ? 'random' : 'predefined';
+            document.getElementById('order-mode-select').value = gameOrderMode;
         }
 
         // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
@@ -417,6 +434,7 @@
         }
 
         let allGamesData = [];
+        let gameOrderMode = 'predefined';
 
         async function loadGames() {
             try {
@@ -517,9 +535,9 @@
                 return;
             }
 
-            const randomGames = shuffleGames(gamesList);
+            const orderedGames = getOrderedGames(gamesList);
 
-            randomGames.forEach(game => {
+            orderedGames.forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.onclick = () => openSteamDetails(game.gameTitle, game.thumbUrl, game.playUrl, game.bioUrl);
@@ -552,13 +570,13 @@
                 return;
             }
 
-            const [featured] = shuffleGames(gamesList);
+            const featured = getDailyFeaturedGame(gamesList);
             const card = document.createElement('div');
             card.className = 'game-card featured-card';
             card.onclick = () => openSteamDetails(featured.gameTitle, featured.thumbUrl, featured.playUrl, featured.bioUrl);
 
             card.innerHTML = `
-                <div class="badge-game">DESTAQUE</div>
+                <div class="badge-game">DESTAQUE DO DIA</div>
                 <img src="${featured.thumbUrl}"
                      onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(featured.gameTitle)}'"
                      alt="${featured.gameTitle}">
@@ -569,6 +587,28 @@
             `;
 
             featuredWrapper.appendChild(card);
+        }
+
+        function getOrderedGames(gamesList) {
+            if (gameOrderMode === 'random') {
+                return shuffleGames(gamesList);
+            }
+            return [...gamesList].sort((a, b) => a.gameTitle.localeCompare(b.gameTitle, 'pt-BR'));
+        }
+
+        function getDailyFeaturedGame(gamesList) {
+            const today = new Date().toISOString().slice(0, 10);
+            const seed = hashString(today);
+            return gamesList[seed % gamesList.length];
+        }
+
+        function hashString(text) {
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                hash = ((hash << 5) - hash) + text.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
         }
 
         function shuffleGames(gamesList) {
