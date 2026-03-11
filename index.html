@@ -50,56 +50,38 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        header {
-            text-align: center;
-            padding: 20px;
-            margin-top: 10px;
-            position: relative;
-            z-index: 10;
-        }
+        header { text-align: center; padding: 20px; margin-top: 10px; position: relative; z-index: 10; }
 
         h1 {
-            font-size: 2.5rem;
-            margin: 0;
+            font-size: 2.5rem; margin: 0;
             text-shadow: 2px 2px 0px var(--header-shadow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
         .subtitle { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
 
         .green-banner {
-            background-color: var(--green-banner);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            margin: 10px 20px;
-            border-radius: 10px;
-            font-weight: 500;
-            box-shadow: 0 4px 0 #4cae4c;
+            background-color: var(--green-banner); color: white; text-align: center;
+            padding: 15px; margin: 10px 20px; border-radius: 10px;
+            font-weight: 500; box-shadow: 0 4px 0 #4cae4c;
         }
 
         .header-buttons { display: flex; justify-content: center; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
 
         .btn-about {
-            background: #fd79a8;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-            box-shadow: 0 4px 0 #e84393;
-            transition: 0.2s;
+            background: #fd79a8; border: none; padding: 10px 25px; border-radius: 8px;
+            color: white; font-weight: bold; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 4px 0 #e84393; transition: 0.2s;
         }
         .btn-about:active { transform: translateY(3px); box-shadow: none; }
         .btn-settings { background: #0984e3; box-shadow: 0 4px 0 #076bb8; }
 
         .chat-link { text-decoration: none; display: block; }
-        .chat-banner { background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px; border-radius: 30px; text-align: center; color: white; font-weight: bold; box-shadow: 0 4px 0 #008e72; transition: transform 0.2s; }
+        .chat-banner {
+            background-color: #00b894; max-width: 600px; margin: 20px auto; padding: 12px;
+            border-radius: 30px; text-align: center; color: white; font-weight: bold;
+            box-shadow: 0 4px 0 #008e72; transition: transform 0.2s;
+        }
         .chat-banner:hover { transform: scale(1.02); background-color: #00cea5; }
 
         .section-title { text-align: center; font-size: 1.5rem; margin: 30px 0 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -109,16 +91,10 @@
         #game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto; }
 
         .game-card {
-            background: var(--card-bg);
-            color: var(--card-text);
-            border-radius: 15px;
-            padding: 10px;
-            text-align: center;
-            transition: transform 0.2s, background 0.3s, color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column;
-            position: relative;
-            cursor: pointer;
+            background: var(--card-bg); color: var(--card-text); border-radius: 15px; padding: 10px;
+            text-align: center; transition: transform 0.2s, background 0.3s, color 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+            position: relative; cursor: pointer;
         }
         .game-card:hover { transform: translateY(-5px); }
         .game-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; background-color: #ddd; }
@@ -128,21 +104,21 @@
         .badge-game { position: absolute; top: 15px; right: 15px; background: #ffdd40; color: #8a6d3b; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
         .about-modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .about-content { background-color: var(--modal-bg); color: var(--modal-text); margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; transition: background 0.3s, color 0.3s;}
+        .about-content { background-color: var(--modal-bg); color: var(--modal-text); margin: 10% auto; padding: 30px; border-radius: 20px; width: 80%; max-width: 500px; position: relative; transition: background 0.3s, color 0.3s; }
         .close-about { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; }
 
         .theme-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        .theme-btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s;}
+        .theme-btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
         .theme-btn:hover { transform: scale(1.05); }
-        .t-classic { background: #f5c000; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
+        .t-classic { background: #f5c000; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .t-dark { background: #121212; color: white; border: 1px solid #444; }
         .t-light { background: #ffffff; color: #333; border: 1px solid #ccc; }
-        .toggle-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; background: rgba(128,128,128,0.1); padding: 15px; border-radius: 10px;}
+        .toggle-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; background: rgba(128,128,128,0.1); padding: 15px; border-radius: 10px; }
         .toggle-container input { width: 20px; height: 20px; cursor: pointer; }
 
         .steam-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: #171a21; overflow-y: auto; }
         .steam-bg-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.5); z-index: -1; transition: background-image 0.5s; }
-        .steam-container { max-width: 900px; margin: 40px auto; background: rgba(23, 26, 33, 0.95); border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column; color: #c6d4df; border: 1px solid rgba(255,255,255,0.1); animation: slideUp 0.3s ease-out; }
+        .steam-container { max-width: 900px; margin: 40px auto; background: rgba(23,26,33,0.95); border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column; color: #c6d4df; border: 1px solid rgba(255,255,255,0.1); animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .steam-nav { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); }
         .btn-back { background: transparent; border: 1px solid #fff; color: white; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
@@ -152,50 +128,36 @@
         .steam-cover-box img { width: 100%; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .steam-info-box { flex: 1; }
         .steam-title { font-size: 2.8rem; color: white; margin: 0 0 10px 0; line-height: 1; text-transform: capitalize; }
-        .steam-play-btn { background: linear-gradient(90deg, #6e3aff 0%, #8a5aff 100%); color: white; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 1.5rem; font-weight: bold; display: inline-block; margin: 20px 0; box-shadow: 0 0 20px rgba(110, 58, 255, 0.4); transition: 0.2s; }
-        .steam-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(110, 58, 255, 0.6); }
+        .steam-play-btn { background: linear-gradient(90deg, #6e3aff 0%, #8a5aff 100%); color: white; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 1.5rem; font-weight: bold; display: inline-block; margin: 20px 0; box-shadow: 0 0 20px rgba(110,58,255,0.4); transition: 0.2s; }
+        .steam-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(110,58,255,0.6); }
         .steam-bio-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #66c0f4; }
         .steam-bio-text { font-size: 1rem; line-height: 1.6; color: #acb2b8; white-space: pre-wrap; }
-        @media (max-width: 768px) { .steam-body { flex-direction: column; } .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; } .steam-title { text-align: center; font-size: 2rem; } .steam-play-btn { display: block; text-align: center; } }
+        @media (max-width: 768px) {
+            .steam-body { flex-direction: column; }
+            .steam-cover-box { flex: none; width: 100%; max-width: 250px; margin: 0 auto; }
+            .steam-title { text-align: center; font-size: 2rem; }
+            .steam-play-btn { display: block; text-align: center; }
+        }
 
         #btn-online-multiplayer {
-            display: none;
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(45deg, #ff4757, #ff6b81);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.5);
-            z-index: 10000;
+            display: none; position: fixed; bottom: 30px; right: 30px;
+            background: linear-gradient(45deg, #ff4757, #ff6b81); color: white;
+            padding: 15px 25px; border-radius: 50px; text-decoration: none;
+            font-weight: bold; font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(255,71,87,0.5); z-index: 10000;
             transition: transform 0.3s, box-shadow 0.3s;
             animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #btn-online-multiplayer:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.7); }
+        #btn-online-multiplayer:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 6px 20px rgba(255,71,87,0.7); }
         @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Estilo do Anúncio Flutuante */
         #pato-ad-container {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 300px;
-            height: auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            z-index: 9999999999;
-            overflow: hidden;
-            border: 2px solid #6e3aff;
-            animation: slideIn 0.5s ease-out;
-            cursor: pointer;
+            display: none; position: fixed; bottom: 20px; left: 20px; width: 300px;
+            background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            z-index: 9999999999; overflow: hidden; border: 2px solid #6e3aff;
+            animation: slideIn 0.5s ease-out; cursor: pointer;
         }
-        @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+        @keyframes slideIn { from { transform: translateX(-120%); } to { transform: translateX(0); } }
         #pato-ad-img { width: 100%; display: block; border-radius: 8px; }
         .ad-close-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; width: 20px; height: 20px; text-align: center; line-height: 18px; border-radius: 50%; font-size: 14px; cursor: pointer; z-index: 10; font-weight: bold; }
         .ad-close-btn:hover { background: red; }
@@ -214,18 +176,13 @@
     </div>
 
     <div class="header-buttons">
-        <button class="btn-about" onclick="toggleAbout(true)">
-            <i class="fas fa-info-circle"></i> Sobre O Site
-        </button>
-        <button class="btn-about btn-settings" onclick="toggleSettings(true)">
-            <i class="fas fa-cog"></i> Configurações
-        </button>
+        <button class="btn-about" onclick="toggleAbout(true)"><i class="fas fa-info-circle"></i> Sobre O Site</button>
+        <button class="btn-about btn-settings" onclick="toggleSettings(true)"><i class="fas fa-cog"></i> Configurações</button>
     </div>
 
     <a href="https://cadeaçãoplay.my.canva.site/whatsapp-online" target="_blank" class="chat-link">
         <div class="chat-banner"><i class="fas fa-comment-dots"></i> Fale com a gente no Chat Online!</div>
     </a>
-
     <a href="https://forms.gle/kT61Qy2ZAeoCWciJ6" target="_blank" class="chat-link">
         <div class="chat-banner"><i class="fas fa-comment-dots"></i> Fale Conosco E Envie Seu Feedback!</div>
     </a>
@@ -238,12 +195,9 @@
     </div>
 
     <div class="section-title"><i class="fas fa-star"></i> Jogos em Destaque</div>
-    <div id="featured-container">
-        <div id="featured-game"></div>
-    </div>
+    <div id="featured-container"><div id="featured-game"></div></div>
 
     <div class="section-title"><i class="fas fa-rocket"></i> Biblioteca de Jogos</div>
-
     <div id="game-grid">
         <p style="color: var(--text-color); grid-column: 1/-1; text-align: center;" id="loading">
             <i class="fas fa-spinner fa-spin"></i> Conectando ao GitHub...
@@ -258,9 +212,7 @@
                 <button class="btn-back" onclick="closeSteam()"><i class="fas fa-arrow-left"></i> VOLTAR</button>
             </div>
             <div class="steam-body">
-                <div class="steam-cover-box">
-                    <img id="steamCover" src="" alt="Capa">
-                </div>
+                <div class="steam-cover-box"><img id="steamCover" src="" alt="Capa"></div>
                 <div class="steam-info-box">
                     <h1 id="steamTitle" class="steam-title">Nome do Jogo</h1>
                     <a id="steamPlayBtn" href="#" class="steam-play-btn"><i class="fas fa-play"></i> JOGAR AGORA</a>
@@ -274,7 +226,7 @@
     </div>
 
     <!-- Modal Sobre -->
-    <div id="aboutSiteModal" class="about-modal" onclick="if(event.target == this) toggleAbout(false)">
+    <div id="aboutSiteModal" class="about-modal" onclick="if(event.target==this) toggleAbout(false)">
         <div class="about-content">
             <span class="close-about" onclick="toggleAbout(false)">&times;</span>
             <h2>📖 Sobre O Site 🎮</h2>
@@ -287,7 +239,7 @@
     </div>
 
     <!-- Modal Configurações -->
-    <div id="settingsModal" class="about-modal" onclick="if(event.target == this) toggleSettings(false)">
+    <div id="settingsModal" class="about-modal" onclick="if(event.target==this) toggleSettings(false)">
         <div class="about-content">
             <span class="close-about" onclick="toggleSettings(false)">&times;</span>
             <h2>⚙️ Configurações</h2>
@@ -329,44 +281,38 @@
 
     <script>
         // --- CONFIGURAÇÃO GITHUB ---
-        const USER = 'gustavotedeski2-create';
-        const REPO = 'PatoPlayerGamez';
+        const USER   = 'gustavotedeski2-create';
+        const REPO   = 'PatoPlayerGamez';
         const FOLDER = 'games';
         const API_URL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
 
-        // --- FUNÇÕES DE MODAIS ---
-        function toggleAbout(show) { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
-        function toggleSettings(show) { document.getElementById('settingsModal').style.display = show ? 'block' : 'none'; }
-        function closeSteam() { document.getElementById('steamModal').style.display = 'none'; }
+        // --- MODAIS ---
+        function toggleAbout(show)    { document.getElementById('aboutSiteModal').style.display = show ? 'block' : 'none'; }
+        function toggleSettings(show) { document.getElementById('settingsModal').style.display  = show ? 'block' : 'none'; }
+        function closeSteam()         { document.getElementById('steamModal').style.display     = 'none'; }
 
-        // --- TEMAS E CONFIGURAÇÕES ---
+        // --- TEMAS ---
         function mudarTema(tema) {
             document.body.classList.remove('theme-dark', 'theme-light');
-            if (tema === 'dark') document.body.classList.add('theme-dark');
+            if (tema === 'dark')  document.body.classList.add('theme-dark');
             if (tema === 'light') document.body.classList.add('theme-light');
             localStorage.setItem('patoPlayerTheme', tema);
         }
 
         function alternarBotaoOnlineManual(mostrar) {
             const btn = document.getElementById('btn-online-multiplayer');
-            if (mostrar) {
-                btn.style.setProperty('display', 'inline-block', 'important');
-                localStorage.setItem('patoOnlineLiberado', 'true');
-            } else {
-                btn.style.setProperty('display', 'none', 'important');
-                localStorage.setItem('patoOnlineLiberado', 'false');
-            }
+            btn.style.setProperty('display', mostrar ? 'inline-block' : 'none', 'important');
+            localStorage.setItem('patoOnlineLiberado', mostrar ? 'true' : 'false');
         }
 
         function mudarOrdemJogos(mode) {
-            gameOrderMode = mode === 'random' ? 'random' : 'predefined';
+            gameOrderMode = (mode === 'random') ? 'random' : 'predefined';
             localStorage.setItem('patoGameOrderMode', gameOrderMode);
             filterGames();
         }
 
         function carregarConfiguracoesSalvas() {
-            const temaSalvo = localStorage.getItem('patoPlayerTheme') || 'classic';
-            mudarTema(temaSalvo);
+            mudarTema(localStorage.getItem('patoPlayerTheme') || 'classic');
 
             const onlineLiberado = localStorage.getItem('patoOnlineLiberado') === 'true';
             document.getElementById('toggleOnlineCb').checked = onlineLiberado;
@@ -375,31 +321,31 @@
             }
 
             const ordemSalva = localStorage.getItem('patoGameOrderMode') || 'predefined';
-            gameOrderMode = ordemSalva === 'random' ? 'random' : 'predefined';
+            gameOrderMode = (ordemSalva === 'random') ? 'random' : 'predefined';
             document.getElementById('order-mode-select').value = gameOrderMode;
         }
 
-        // --- CRONÔMETRO JOGOS ONLINE (5 MIN) ---
+        // --- CRONÔMETRO 5 MIN ---
         function iniciarCronometroJogatina() {
             const TEMPO_NECESSARIO = 300;
-            const btnOnline = document.getElementById('btn-online-multiplayer');
-            const checkboxOnline = document.getElementById('toggleOnlineCb');
-            let tempoGasto = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
+            const btnOnline    = document.getElementById('btn-online-multiplayer');
+            const cbOnline     = document.getElementById('toggleOnlineCb');
+            let tempoGasto     = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
 
-            const desbloquearOnline = () => {
+            const desbloquear = () => {
                 btnOnline.style.setProperty('display', 'inline-block', 'important');
-                checkboxOnline.checked = true;
+                cbOnline.checked = true;
                 localStorage.setItem('patoOnlineLiberado', 'true');
             };
 
             if (tempoGasto >= TEMPO_NECESSARIO) {
-                desbloquearOnline();
+                desbloquear();
             } else {
                 const timer = setInterval(() => {
                     tempoGasto++;
                     localStorage.setItem('tempoPatoPlayer', tempoGasto);
                     if (tempoGasto === TEMPO_NECESSARIO) {
-                        desbloquearOnline();
+                        desbloquear();
                         alert("Vimos que você jogou por 5 minutos no nosso site! O atalho de ativação automática do modo online foi habilitado, Aproveite! 🎉");
                         clearInterval(timer);
                     }
@@ -407,122 +353,132 @@
             }
         }
 
-        // --- DETALHES DA STEAM ---
+        // --- MODAL STEAM ---
         async function openSteamDetails(title, imgUrl, playUrl, bioUrl) {
-            const modal = document.getElementById('steamModal');
-            document.getElementById('steamTitle').innerText = title;
-            document.getElementById('steamCover').src = imgUrl;
+            document.getElementById('steamTitle').innerText  = title;
+            document.getElementById('steamCover').src        = imgUrl;
             document.getElementById('steamBg').style.backgroundImage = `url('${imgUrl}')`;
-            document.getElementById('steamPlayBtn').href = playUrl;
-            document.getElementById('steamBio').innerHTML = 'Carregando informações...';
-            modal.style.display = 'block';
+            document.getElementById('steamPlayBtn').href     = playUrl;
+            document.getElementById('steamBio').innerHTML    = 'Carregando informações...';
+            document.getElementById('steamModal').style.display = 'block';
 
             if (bioUrl) {
                 try {
-                    const response = await fetch(bioUrl);
-                    if (response.ok) {
-                        document.getElementById('steamBio').innerText = await response.text();
-                    } else {
-                        document.getElementById('steamBio').innerText = "Sem descrição disponível. Apenas divirta-se!";
-                    }
-                } catch (err) {
-                    document.getElementById('steamBio').innerText = "Erro ao carregar bio.";
+                    const res = await fetchWithTimeout(bioUrl, 5000);
+                    document.getElementById('steamBio').innerText = res.ok
+                        ? await res.text()
+                        : 'Sem descrição disponível. Apenas divirta-se!';
+                } catch {
+                    document.getElementById('steamBio').innerText = 'Erro ao carregar bio.';
                 }
             } else {
-                document.getElementById('steamBio').innerText = "Este jogo não possui descrição detalhada.";
+                document.getElementById('steamBio').innerText = 'Este jogo não possui descrição detalhada.';
             }
         }
 
-        let allGamesData = [];
+        // --- FETCH COM TIMEOUT ---
+        // Evita que uma requisição travada congele o carregamento inteiro
+        function fetchWithTimeout(url, ms = 5000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), ms);
+            return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+        }
+
+        let allGamesData  = [];
         let gameOrderMode = 'predefined';
 
         async function loadGames() {
+            const loadingEl = document.getElementById('loading');
             try {
-                const response = await fetch(API_URL);
-
-                // ✅ CORREÇÃO: verifica se a resposta foi bem-sucedida
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
+                const response = await fetchWithTimeout(API_URL, 10000);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-                const grid = document.getElementById('game-grid');
-                const categorySelect = document.getElementById('category-select');
-                const categories = new Set();
 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('category-filter-container').style.display = 'block';
+                // ✅ SOMENTE pastas com extensão exata ".game"
+                const items = data.filter(item =>
+                    item.type === 'dir' && item.name.endsWith('.game')
+                );
 
-                // ✅ CORREÇÃO: aceita pastas com ou sem extensão .game/.games
-                const items = data.filter(item => {
-                    const isFolder = item.type === 'dir';
-                    const isHtml = item.type === 'file' && item.name.endsWith('.html');
-                    return isFolder || isHtml;
-                });
+                loadingEl.style.display = 'none';
+
+                if (items.length === 0) {
+                    loadingEl.style.display = 'block';
+                    loadingEl.innerHTML = '<i class="fas fa-box-open"></i> Nenhuma pasta <b>.game</b> encontrada no repositório.';
+                    return;
+                }
 
                 document.getElementById('game-count').innerText = items.length;
+                document.getElementById('category-filter-container').style.display = 'block';
 
                 const baseUrl = `https://${USER}.github.io/${REPO}/${FOLDER}`;
 
-                // ✅ CORREÇÃO: usa Promise.all para carregar jogos em paralelo (mais rápido)
-                const promises = items.map(async (item) => {
-                    let gameTitle, thumbUrl, playUrl, bioUrl, categoria = "Outros";
+                // ✅ Promise.allSettled: se uma pasta falhar, as outras continuam carregando
+                const results = await Promise.allSettled(
+                    items.map(item => loadSingleGame(item, baseUrl))
+                );
 
-                    if (item.type === 'dir') {
-                        gameTitle = item.name.replace(/\.games?$/i, '').replace(/-/g, ' ');
-                        thumbUrl = `${baseUrl}/${item.name}/cover.png`;
-                        bioUrl = `${baseUrl}/${item.name}/bio.txt`;
+                allGamesData = results
+                    .filter(r => r.status === 'fulfilled' && r.value !== null)
+                    .map(r => r.value);
 
-                        // Tenta ler categoria
-                        try {
-                            const catRes = await fetch(`${baseUrl}/${item.name}/categoria.txt`);
-                            if (catRes.ok) {
-                                categoria = (await catRes.text()).trim();
-                            }
-                        } catch (e) { /* mantém "Outros" */ }
+                if (allGamesData.length === 0) {
+                    loadingEl.style.display = 'block';
+                    loadingEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Nenhum jogo pôde ser carregado.';
+                    return;
+                }
 
-                        // Tenta achar o HTML dentro da pasta
-                        try {
-                            const fRes = await fetch(item.url);
-                            if (fRes.ok) {
-                                const fData = await fRes.json();
-                                const htmlFile = fData.find(f => f.name.endsWith('.html'));
-                                playUrl = htmlFile ? `${baseUrl}/${item.name}/${htmlFile.name}` : `${baseUrl}/${item.name}/index.html`;
-                            } else {
-                                playUrl = `${baseUrl}/${item.name}/index.html`;
-                            }
-                        } catch {
-                            playUrl = `${baseUrl}/${item.name}/index.html`;
-                        }
-
-                    } else {
-                        gameTitle = item.name.replace('.html', '').replace(/-/g, ' ');
-                        thumbUrl = `https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(gameTitle)}`;
-                        playUrl = `${baseUrl}/${item.name}`;
-                        bioUrl = null;
-                    }
-
-                    return { gameTitle, thumbUrl, playUrl, bioUrl, categoria, type: item.type };
-                });
-
-                allGamesData = await Promise.all(promises);
-
-                // Preenche categorias no select
-                allGamesData.forEach(g => categories.add(g.categoria));
+                // Popula filtro de categorias
+                const categorySelect = document.getElementById('category-select');
+                const categories = [...new Set(allGamesData.map(g => g.categoria))].sort();
                 categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat;
-                    option.innerText = cat;
-                    categorySelect.appendChild(option);
+                    const opt = document.createElement('option');
+                    opt.value = cat; opt.innerText = cat;
+                    categorySelect.appendChild(opt);
                 });
 
                 renderFeaturedGame(allGamesData);
                 renderGames(allGamesData);
 
-            } catch (error) {
-                console.error('Erro ao carregar jogos:', error);
-                document.getElementById('loading').innerHTML =
-                    `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar jogos: ${error.message}`;
+            } catch (err) {
+                console.error('Erro ao carregar jogos:', err);
+                loadingEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Falha ao conectar ao GitHub: ${err.message}`;
+            }
+        }
+
+        // Carrega dados de UMA pasta .game — falhas individuais são isoladas
+        async function loadSingleGame(item, baseUrl) {
+            try {
+                // Remove ".game" para o título
+                const gameTitle = item.name.replace(/\.game$/i, '').replace(/-/g, ' ');
+                const thumbUrl  = `${baseUrl}/${item.name}/cover.png`;
+                const bioUrl    = `${baseUrl}/${item.name}/bio.txt`;
+                let categoria   = 'Outros';
+                let playUrl     = `${baseUrl}/${item.name}/index.html`;
+
+                // Tenta ler categoria.txt
+                try {
+                    const catRes = await fetchWithTimeout(`${baseUrl}/${item.name}/categoria.txt`, 3000);
+                    if (catRes.ok) {
+                        const txt = (await catRes.text()).trim();
+                        if (txt) categoria = txt;
+                    }
+                } catch { /* mantém "Outros" */ }
+
+                // Tenta encontrar o arquivo .html principal via API
+                try {
+                    const fRes = await fetchWithTimeout(item.url, 4000);
+                    if (fRes.ok) {
+                        const fData = await fRes.json();
+                        const htmlFile = fData.find(f => f.name.endsWith('.html'));
+                        if (htmlFile) playUrl = `${baseUrl}/${item.name}/${htmlFile.name}`;
+                    }
+                } catch { /* mantém index.html */ }
+
+                return { gameTitle, thumbUrl, playUrl, bioUrl, categoria };
+            } catch (e) {
+                console.warn(`Falha ao carregar "${item.name}":`, e);
+                return null;
             }
         }
 
@@ -530,24 +486,17 @@
             const grid = document.getElementById('game-grid');
             grid.innerHTML = '';
 
-            if (gamesList.length === 0) {
+            if (!gamesList.length) {
                 grid.innerHTML = '<p style="grid-column:1/-1; text-align:center;">Nenhum jogo encontrado nesta categoria.</p>';
                 return;
             }
 
-            const orderedGames = getOrderedGames(gamesList);
-
-            orderedGames.forEach(game => {
+            getOrderedGames(gamesList).forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.onclick = () => openSteamDetails(game.gameTitle, game.thumbUrl, game.playUrl, game.bioUrl);
-
-                const badge = game.type === 'dir'
-                    ? `<div class="badge-game">${game.categoria.toUpperCase()}</div>`
-                    : '';
-
                 card.innerHTML = `
-                    ${badge}
+                    <div class="badge-game">${game.categoria.toUpperCase()}</div>
                     <img src="${game.thumbUrl}"
                          onerror="this.src='https://via.placeholder.com/300x200/6e3aff/ffffff?text=${encodeURIComponent(game.gameTitle)}'"
                          alt="${game.gameTitle}">
@@ -555,26 +504,20 @@
                     <span class="btn-play-card"
                           onclick="event.stopPropagation(); window.location.href='${game.playUrl}'">
                         JOGAR
-                    </span>
-                `;
+                    </span>`;
                 grid.appendChild(card);
             });
         }
 
         function renderFeaturedGame(gamesList) {
-            const featuredWrapper = document.getElementById('featured-game');
-            featuredWrapper.innerHTML = '';
-
-            if (gamesList.length === 0) {
-                featuredWrapper.innerHTML = '<p style="text-align:center;">Sem jogos em destaque no momento.</p>';
-                return;
-            }
+            const wrapper = document.getElementById('featured-game');
+            wrapper.innerHTML = '';
+            if (!gamesList.length) { wrapper.innerHTML = '<p style="text-align:center;">Sem jogos em destaque.</p>'; return; }
 
             const featured = getDailyFeaturedGame(gamesList);
             const card = document.createElement('div');
             card.className = 'game-card featured-card';
             card.onclick = () => openSteamDetails(featured.gameTitle, featured.thumbUrl, featured.playUrl, featured.bioUrl);
-
             card.innerHTML = `
                 <div class="badge-game">DESTAQUE DO DIA</div>
                 <img src="${featured.thumbUrl}"
@@ -583,23 +526,18 @@
                 <h3>${featured.gameTitle}</h3>
                 <span class="btn-play-card" onclick="event.stopPropagation(); window.location.href='${featured.playUrl}'">
                     JOGAR AGORA
-                </span>
-            `;
-
-            featuredWrapper.appendChild(card);
+                </span>`;
+            wrapper.appendChild(card);
         }
 
-        function getOrderedGames(gamesList) {
-            if (gameOrderMode === 'random') {
-                return shuffleGames(gamesList);
-            }
-            return [...gamesList].sort((a, b) => a.gameTitle.localeCompare(b.gameTitle, 'pt-BR'));
+        function getOrderedGames(list) {
+            if (gameOrderMode === 'random') return shuffleGames(list);
+            return [...list].sort((a, b) => a.gameTitle.localeCompare(b.gameTitle, 'pt-BR'));
         }
 
-        function getDailyFeaturedGame(gamesList) {
+        function getDailyFeaturedGame(list) {
             const today = new Date().toISOString().slice(0, 10);
-            const seed = hashString(today);
-            return gamesList[seed % gamesList.length];
+            return list[Math.abs(hashString(today)) % list.length];
         }
 
         function hashString(text) {
@@ -608,67 +546,62 @@
                 hash = ((hash << 5) - hash) + text.charCodeAt(i);
                 hash |= 0;
             }
-            return Math.abs(hash);
+            return hash;
         }
 
-        function shuffleGames(gamesList) {
-            const shuffled = [...gamesList];
-            for (let i = shuffled.length - 1; i > 0; i--) {
+        function shuffleGames(list) {
+            const arr = [...list];
+            for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                [arr[i], arr[j]] = [arr[j], arr[i]];
             }
-            return shuffled;
+            return arr;
         }
 
         function filterGames() {
-            const selected = document.getElementById('category-select').value;
-            const filtered = selected === 'all' ? allGamesData : allGamesData.filter(g => g.categoria === selected);
+            const sel = document.getElementById('category-select').value;
+            const filtered = sel === 'all' ? allGamesData : allGamesData.filter(g => g.categoria === sel);
             renderFeaturedGame(filtered);
             renderGames(filtered);
         }
 
         // --- ADS ---
-        const AD_USER = 'gustavotedeski2-create';
-        const AD_REPO = 'PatoPlayerGamez';
-        const AD_FOLDER = 'ads';
-        const TEMPO_PARA_APARECER = 1500;
-
         async function loadPatoAds() {
             try {
-                const apiUrl = `https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}`;
-                const response = await fetch(apiUrl);
-                if (!response.ok) return;
+                const res = await fetchWithTimeout(
+                    `https://api.github.com/repos/${USER}/${REPO}/contents/ads`, 5000
+                );
+                if (!res.ok) return;
 
-                const data = await response.json();
-                const adFolders = data.filter(item => item.type === 'dir');
-                if (adFolders.length === 0) return;
+                const data = await res.json();
+                const adFolders = data.filter(i => i.type === 'dir');
+                if (!adFolders.length) return;
 
                 const randomAd = adFolders[Math.floor(Math.random() * adFolders.length)];
-                const contentResponse = await fetch(`https://api.github.com/repos/${AD_USER}/${AD_REPO}/contents/${AD_FOLDER}/${randomAd.name}`);
-                const contentData = await contentResponse.json();
+                const cRes = await fetchWithTimeout(
+                    `https://api.github.com/repos/${USER}/${REPO}/contents/ads/${randomAd.name}`, 5000
+                );
+                if (!cRes.ok) return;
 
-                const imageFile = contentData.find(f => f.name.match(/\.(png|jpg|jpeg|gif)$/i));
-                const linkFile = contentData.find(f => f.name === 'link.txt');
+                const cData    = await cRes.json();
+                const imgFile  = cData.find(f => /\.(png|jpe?g|gif)$/i.test(f.name));
+                const linkFile = cData.find(f => f.name === 'link.txt');
 
-                if (imageFile && linkFile) {
-                    document.getElementById('pato-ad-img').src = imageFile.download_url;
-                    const linkResponse = await fetch(linkFile.download_url);
-                    document.getElementById('pato-ad-link').href = (await linkResponse.text()).trim();
-
-                    setTimeout(() => {
-                        document.getElementById('pato-ad-container').style.display = 'block';
-                    }, TEMPO_PARA_APARECER);
+                if (imgFile && linkFile) {
+                    const lRes = await fetchWithTimeout(linkFile.download_url, 3000);
+                    if (!lRes.ok) return;
+                    document.getElementById('pato-ad-img').src  = imgFile.download_url;
+                    document.getElementById('pato-ad-link').href = (await lRes.text()).trim();
+                    setTimeout(() => { document.getElementById('pato-ad-container').style.display = 'block'; }, 1500);
                 }
-            } catch (error) {
-                console.error("Erro ao carregar anúncio:", error);
+            } catch (e) {
+                console.warn('Anúncio não carregado:', e.message);
             }
         }
 
-        function closeAd() {
-            document.getElementById('pato-ad-container').style.display = 'none';
-        }
+        function closeAd() { document.getElementById('pato-ad-container').style.display = 'none'; }
 
-        // ✅ CORREÇÃO PRINCIPAL: inicializa tudo quando a página carrega
+        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             carregarConfiguracoesSalvas();
             iniciarCronometroJogatina();
