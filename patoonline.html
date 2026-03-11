@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PatoPlayer ONLINE 🦆⚡</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00ffe7;
+            --neon-green: #00ff88;
+            --neon-red: #ff2d55;
+            --bg-void: #050810;
+            --bg-panel: #0b0f1a;
+            --bg-card: #0e1525;
+            --bg-card-hover: #141d33;
+            --border-glow: rgba(0,255,231,0.2);
+            --text-main: #e8f4ff;
+            --text-dim: #7a8fb0;
+        }
+        body.theme-dark  { --bg-void:#0a0a0a; --bg-panel:#111; --bg-card:#161616; --bg-card-hover:#1c1c1c; }
+        body.theme-light { --bg-void:#e8ecf4; --bg-panel:#f0f3fa; --bg-card:#fff; --bg-card-hover:#f5f8ff; --text-main:#1a1f33; --text-dim:#556080; --border-glow:rgba(0,150,180,0.2); }
+
+        *    { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+
+        body {
+            font-family:'Rajdhani',sans-serif;
+            background:var(--bg-void);
+            color:var(--text-main);
+            min-height:100vh;
+            overflow-x:hidden;
+        }
+
+        /* GRID BG */
+        body::before {
+            content:'';
+            position:fixed; inset:0;
+            background-image:
+                linear-gradient(rgba(0,255,231,0.025) 1px,transparent 1px),
+                linear-gradient(90deg,rgba(0,255,231,0.025) 1px,transparent 1px);
+            background-size:40px 40px;
+            pointer-events:none; z-index:0;
+        }
+        body::after {
+            content:'';
+            position:fixed; top:-50%; left:-50%; width:200%; height:200%;
+            background:radial-gradient(ellipse at 30% 20%,rgba(0,255,231,0.04) 0%,transparent 50%),
+                       radial-gradient(ellipse at 70% 80%,rgba(0,255,136,0.03) 0%,transparent 50%);
+            pointer-events:none; z-index:0;
+            animation:bgPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes bgPulse { 0%{opacity:.5} 100%{opacity:1} }
+
+        /* STATUS BAR */
+        #status-bar {
+            position:relative; z-index:100;
+            background:rgba(0,255,231,0.04);
+            border-bottom:1px solid var(--border-glow);
+            padding:6px 20px;
+            display:flex; align-items:center; justify-content:space-between;
+            font-family:'Orbitron',monospace; font-size:.62rem;
+            letter-spacing:.1em; color:var(--text-dim);
+            flex-wrap:wrap; gap:6px;
+        }
+        .status-left,.status-right { display:flex; align-items:center; gap:16px; }
+        .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--neon-green); box-shadow:0 0 8px var(--neon-green); animation:blink 1.5s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .c-green { color:var(--neon-green); font-weight:700; }
+        .c-cyan  { color:var(--neon-cyan); }
+
+        /* HEADER */
+        header { position:relative; z-index:10; text-align:center; padding:55px 20px 30px; }
+        .logo-tag { font-family:'Orbitron',monospace; font-size:.62rem; letter-spacing:.4em; color:var(--neon-cyan); opacity:.8; display:block; margin-bottom:10px; }
+        h1 {
+            font-family:'Orbitron',monospace;
+            font-size:clamp(2rem,7vw,4.2rem); font-weight:900; letter-spacing:-.02em;
+            background:linear-gradient(135deg,#fff 0%,var(--neon-cyan) 50%,var(--neon-green) 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+            filter:drop-shadow(0 0 30px rgba(0,255,231,.4));
+        }
+        .online-badge {
+            display:inline-flex; align-items:center; gap:8px;
+            background:linear-gradient(135deg,rgba(0,255,136,.12),rgba(0,255,231,.08));
+            border:1px solid var(--neon-green); border-radius:30px;
+            padding:6px 20px; margin-top:14px;
+            font-family:'Orbitron',monospace; font-size:.68rem; font-weight:700;
+            color:var(--neon-green); letter-spacing:.12em;
+            box-shadow:0 0 20px rgba(0,255,136,.18);
+        }
+        .live-dot { width:8px; height:8px; border-radius:50%; background:var(--neon-green); box-shadow:0 0 10px var(--neon-green); animation:pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.6);opacity:.5} }
+
+        /* HERO BUTTON */
+        #online-hero { position:relative; z-index:10; max-width:620px; margin:0 auto 35px; padding:0 20px; }
+        .play-online-btn {
+            display:flex; align-items:center; justify-content:center; gap:14px;
+            width:100%; padding:22px 40px;
+            background:linear-gradient(135deg,#00ffe7,#00c8b4);
+            color:#050810; font-family:'Orbitron',monospace;
+            font-size:1.1rem; font-weight:900; letter-spacing:.07em;
+            text-decoration:none; border-radius:6px;
+            box-shadow:0 0 40px rgba(0,255,231,.45),0 0 80px rgba(0,255,231,.18),inset 0 1px 0 rgba(255,255,255,.25);
+            transition:all .2s; position:relative; overflow:hidden;
+        }
+        .play-online-btn::before {
+            content:''; position:absolute; top:-50%; left:-60%; width:35%; height:200%;
+            background:rgba(255,255,255,.18); transform:skewX(-20deg);
+            animation:shine 3s ease-in-out infinite;
+        }
+        @keyframes shine { 0%{left:-60%} 100%{left:160%} }
+        .play-online-btn:hover { transform:translateY(-3px); box-shadow:0 0 60px rgba(0,255,231,.65),0 0 120px rgba(0,255,231,.25); }
+        .btn-icon { width:38px; height:38px; background:rgba(0,0,0,.18); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+
+        /* STATS */
+        #stats-row { position:relative; z-index:10; display:flex; justify-content:center; gap:10px; padding:0 20px 35px; flex-wrap:wrap; }
+        .stat-chip { display:flex; align-items:center; gap:12px; background:var(--bg-panel); border:1px solid var(--border-glow); border-radius:8px; padding:12px 20px; }
+        .stat-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.95rem; }
+        .si-cyan  { background:rgba(0,255,231,.08); color:var(--neon-cyan); }
+        .si-green { background:rgba(0,255,136,.08); color:var(--neon-green); }
+        .si-red   { background:rgba(255,45,85,.08);  color:var(--neon-red); }
+        .stat-val  { font-family:'Orbitron',monospace; font-size:1.05rem; font-weight:700; color:var(--text-main); display:block; }
+        .stat-lbl  { font-size:.68rem; color:var(--text-dim); letter-spacing:.05em; text-transform:uppercase; }
+
+        /* ACTIONS */
+        #header-actions { position:relative; z-index:10; display:flex; justify-content:center; gap:10px; margin-bottom:40px; flex-wrap:wrap; padding:0 20px; }
+        .act-btn { display:flex; align-items:center; gap:8px; background:var(--bg-panel); border:1px solid var(--border-glow); border-radius:6px; padding:10px 20px; color:var(--text-main); font-family:'Rajdhani',sans-serif; font-size:.9rem; font-weight:600; cursor:pointer; transition:all .2s; text-decoration:none; }
+        .act-btn:hover { border-color:var(--neon-cyan); color:var(--neon-cyan); box-shadow:0 0 14px rgba(0,255,231,.12); }
+        .act-btn.g { border-color:rgba(0,255,136,.25); color:var(--neon-green); }
+        .act-btn.g:hover { border-color:var(--neon-green); box-shadow:0 0 14px rgba(0,255,136,.18); }
+
+        /* SECTION TITLE */
+        .sec-title { position:relative; z-index:10; display:flex; align-items:center; gap:14px; padding:0 20px; max-width:1240px; margin:0 auto 18px; font-family:'Orbitron',monospace; font-size:.78rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); }
+        .sec-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border-glow),transparent); }
+        .sec-title i { color:var(--neon-cyan); }
+
+        /* FILTER */
+        #filter-bar { position:relative; z-index:10; display:none; align-items:center; gap:12px; padding:0 20px; max-width:1240px; margin:0 auto 22px; flex-wrap:wrap; }
+        .filter-lbl { font-family:'Orbitron',monospace; font-size:.62rem; letter-spacing:.15em; color:var(--text-dim); text-transform:uppercase; }
+        #category-select { background:var(--bg-panel); border:1px solid var(--border-glow); border-radius:6px; color:var(--text-main); padding:8px 14px; font-family:'Rajdhani',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; outline:none; }
+        #category-select:focus { border-color:var(--neon-cyan); }
+
+        /* FEATURED */
+        #featured-container { position:relative; z-index:10; max-width:700px; margin:0 auto 45px; padding:0 20px; }
+        .featured-card { background:var(--bg-card); border:1px solid var(--border-glow); border-radius:12px; overflow:hidden; cursor:pointer; transition:all .3s; position:relative; }
+        .featured-card:hover { border-color:var(--neon-cyan); box-shadow:0 0 40px rgba(0,255,231,.13); transform:translateY(-4px); }
+        .featured-card img { width:100%; height:220px; object-fit:cover; display:block; }
+        .feat-badge { position:absolute; top:14px; left:14px; background:linear-gradient(135deg,#ffd700,#ffaa00); color:#000; font-family:'Orbitron',monospace; font-size:.58rem; font-weight:700; letter-spacing:.1em; padding:4px 12px; border-radius:3px; }
+        .feat-info { padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .feat-title { font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:700; text-transform:capitalize; }
+        .feat-sub   { font-size:.78rem; color:var(--text-dim); margin-top:3px; }
+        .feat-play  { flex-shrink:0; display:flex; align-items:center; gap:8px; background:var(--neon-cyan); color:var(--bg-void); padding:10px 18px; border-radius:5px; font-family:'Orbitron',monospace; font-size:.7rem; font-weight:700; letter-spacing:.05em; border:none; cursor:pointer; transition:all .2s; box-shadow:0 0 18px rgba(0,255,231,.28); }
+        .feat-play:hover { box-shadow:0 0 30px rgba(0,255,231,.55); transform:scale(1.05); }
+
+        /* GRID */
+        #game-grid { position:relative; z-index:10; display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; padding:0 20px; max-width:1240px; margin:0 auto 70px; }
+        .game-card { background:var(--bg-card); border:1px solid rgba(255,255,255,.05); border-radius:10px; overflow:hidden; cursor:pointer; transition:all .25s; display:flex; flex-direction:column; }
+        .game-card:hover { border-color:var(--neon-cyan); box-shadow:0 0 22px rgba(0,255,231,.1); transform:translateY(-5px); background:var(--bg-card-hover); }
+        .game-card img  { width:100%; height:128px; object-fit:cover; display:block; }
+        .card-body      { padding:12px; flex:1; display:flex; flex-direction:column; gap:8px; }
+        .card-cat  { font-family:'Orbitron',monospace; font-size:.52rem; letter-spacing:.15em; color:var(--neon-cyan); text-transform:uppercase; }
+        .card-title{ font-family:'Rajdhani',sans-serif; font-size:.98rem; font-weight:700; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:capitalize; }
+        .card-play { display:flex; align-items:center; justify-content:center; gap:6px; background:rgba(0,255,231,.07); border:1px solid rgba(0,255,231,.18); border-radius:5px; color:var(--neon-cyan); padding:7px; font-family:'Orbitron',monospace; font-size:.62rem; font-weight:700; letter-spacing:.04em; cursor:pointer; transition:all .2s; margin-top:auto; }
+        .card-play:hover { background:var(--neon-cyan); color:var(--bg-void); box-shadow:0 0 14px rgba(0,255,231,.4); }
+
+        /* MODALS */
+        .modal-overlay { display:none; position:fixed; z-index:10000; inset:0; background:rgba(0,0,0,.85); backdrop-filter:blur(8px); align-items:center; justify-content:center; }
+        .modal-box { background:var(--bg-panel); border:1px solid var(--border-glow); border-radius:12px; padding:35px; width:90%; max-width:480px; position:relative; box-shadow:0 0 60px rgba(0,255,231,.08); animation:mIn .25s ease-out; }
+        @keyframes mIn { from{transform:translateY(-18px) scale(.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+        .modal-close { position:absolute; top:14px; right:18px; background:none; border:none; color:var(--text-dim); font-size:1.4rem; cursor:pointer; transition:color .2s; }
+        .modal-close:hover { color:var(--neon-red); }
+        .modal-title { font-family:'Orbitron',monospace; font-size:.9rem; font-weight:700; letter-spacing:.08em; margin-bottom:18px; color:var(--neon-cyan); }
+        .modal-box p { color:var(--text-dim); line-height:1.65; margin-bottom:10px; font-size:.93rem; }
+        .modal-box b { color:var(--text-main); }
+        .s-section { margin-top:18px; }
+        .s-label { font-family:'Orbitron',monospace; font-size:.6rem; letter-spacing:.15em; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px; display:block; }
+        .theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .theme-btn { padding:10px 6px; border-radius:6px; border:1px solid rgba(255,255,255,.1); cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem; transition:all .2s; }
+        .theme-btn:hover { transform:scale(1.04); }
+        .t-cyber  { background:#050810; color:var(--neon-cyan); border-color:var(--neon-cyan); }
+        .t-dark   { background:#121212; color:#ccc; }
+        .t-light  { background:#f0f0f0; color:#333; }
+        .s-select { width:100%; background:var(--bg-card); border:1px solid var(--border-glow); border-radius:6px; color:var(--text-main); padding:10px 14px; font-family:'Rajdhani',sans-serif; font-weight:600; cursor:pointer; outline:none; margin-top:5px; }
+        .toggle-row { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.03); border:1px solid var(--border-glow); border-radius:8px; padding:14px; margin-top:14px; }
+        .toggle-row input { width:18px; height:18px; cursor:pointer; accent-color:var(--neon-cyan); }
+        .toggle-row label { font-size:.93rem; font-weight:600; cursor:pointer; }
+
+        /* STEAM */
+        .steam-modal { display:none; position:fixed; z-index:9999; inset:0; background:#050810; overflow-y:auto; }
+        .steam-bg-blur { position:fixed; inset:0; background-size:cover; background-position:center; filter:blur(25px) brightness(.3) saturate(1.5); z-index:0; transition:background-image .5s; }
+        .steam-container { position:relative; z-index:1; max-width:950px; margin:40px auto; background:rgba(11,15,26,.95); border:1px solid var(--border-glow); border-radius:16px; overflow:hidden; animation:mIn .3s ease-out; box-shadow:0 0 80px rgba(0,255,231,.07); }
+        .steam-nav { padding:16px 24px; border-bottom:1px solid var(--border-glow); }
+        .btn-back { display:inline-flex; align-items:center; gap:8px; background:none; border:1px solid rgba(255,255,255,.14); border-radius:5px; color:var(--text-dim); padding:8px 16px; font-family:'Orbitron',monospace; font-size:.62rem; letter-spacing:.1em; cursor:pointer; transition:all .2s; }
+        .btn-back:hover { border-color:var(--neon-cyan); color:var(--neon-cyan); }
+        .steam-body { display:flex; padding:35px; gap:35px; }
+        .steam-cover { flex:0 0 300px; }
+        .steam-cover img { width:100%; border-radius:10px; box-shadow:0 15px 40px rgba(0,0,0,.6); }
+        .steam-info { flex:1; }
+        .steam-title { font-family:'Orbitron',monospace; font-size:clamp(1.4rem,3vw,2.4rem); font-weight:900; color:var(--text-main); margin-bottom:8px; text-transform:capitalize; line-height:1.1; }
+        .steam-play { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,var(--neon-cyan),#00c8b4); color:var(--bg-void); text-decoration:none; padding:13px 32px; border-radius:5px; font-family:'Orbitron',monospace; font-size:.95rem; font-weight:900; letter-spacing:.05em; margin:18px 0; box-shadow:0 0 28px rgba(0,255,231,.32); transition:all .2s; }
+        .steam-play:hover { box-shadow:0 0 50px rgba(0,255,231,.55); transform:scale(1.04); }
+        .steam-bio-box { background:rgba(0,255,231,.025); border:1px solid rgba(0,255,231,.1); border-left:3px solid var(--neon-cyan); border-radius:8px; padding:20px; }
+        .bio-lbl { font-family:'Orbitron',monospace; font-size:.6rem; letter-spacing:.15em; color:var(--neon-cyan); margin-bottom:10px; }
+        .bio-txt { color:var(--text-dim); font-size:.93rem; line-height:1.7; white-space:pre-wrap; }
+        @media(max-width:680px) { .steam-body{flex-direction:column;padding:20px} .steam-cover{flex:none;width:100%;max-width:230px;margin:0 auto} }
+
+        /* FLOATING BTN */
+        #btn-online-multiplayer { display:none; position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,var(--neon-red),#ff6b81); color:#fff; padding:13px 22px; border-radius:50px; text-decoration:none; font-family:'Orbitron',monospace; font-weight:700; font-size:.7rem; letter-spacing:.06em; box-shadow:0 0 28px rgba(255,45,85,.45); z-index:9997; transition:all .3s; animation:bounceIn .6s cubic-bezier(.175,.885,.32,1.275); }
+        #btn-online-multiplayer:hover { transform:scale(1.07) translateY(-4px); box-shadow:0 0 50px rgba(255,45,85,.65); }
+        @keyframes bounceIn { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+
+        /* AD */
+        #pato-ad-container { display:none; position:fixed; bottom:20px; left:20px; width:275px; background:var(--bg-panel); border:1px solid var(--border-glow); border-radius:10px; overflow:hidden; z-index:9996; box-shadow:0 10px 40px rgba(0,0,0,.5); animation:slideL .5s ease-out; }
+        @keyframes slideL { from{transform:translateX(-120%)} to{transform:translateX(0)} }
+        #pato-ad-img { width:100%; display:block; }
+        .ad-close { position:absolute; top:7px; right:7px; background:rgba(0,0,0,.7); color:var(--text-dim); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; border:none; transition:background .2s; z-index:10; }
+        .ad-close:hover { background:var(--neon-red); color:#fff; }
+        .ad-lbl { position:absolute; bottom:0; right:0; background:rgba(0,0,0,.6); color:var(--text-dim); font-family:'Orbitron',monospace; font-size:.52rem; letter-spacing:.1em; padding:3px 8px; border-top-left-radius:6px; }
+
+        /* LOADING */
+        #loading { grid-column:1/-1; text-align:center; padding:60px 20px; font-family:'Orbitron',monospace; font-size:.75rem; letter-spacing:.1em; color:var(--text-dim); }
+        #loading i { margin-right:10px; color:var(--neon-cyan); }
+    </style>
+</head>
+<body>
+
+    <!-- STATUS BAR -->
+    <div id="status-bar">
+        <div class="status-left">
+            <span class="dot"></span>
+            <span class="c-green">SERVIDOR ONLINE</span>
+            <span class="c-cyan">👥 <span id="live-players">---</span> jogadores ativos</span>
+        </div>
+        <div class="status-right">
+            <span>PATO ONLINE v2.0</span>
+            <span id="live-clock">--:--:--</span>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <span class="logo-tag">▸ MODO ONLINE ATIVADO ◂</span>
+        <h1>🦆 PATO ONLINE</h1>
+        <div class="online-badge">
+            <div class="live-dot"></div>
+            <span>AO VIVO · MULTIJOGADOR</span>
+        </div>
+    </header>
+
+    <!-- HERO CTA -->
+    <div id="online-hero">
+        <a href="yr.html" class="play-online-btn">
+            <div class="btn-icon"><i class="fas fa-globe"></i></div>
+            <span>ENTRAR NO MODO ONLINE</span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- STATS -->
+    <div id="stats-row">
+        <div class="stat-chip">
+            <div class="stat-icon si-cyan"><i class="fas fa-gamepad"></i></div>
+            <div>
+                <span class="stat-val" id="game-count">--</span>
+                <span class="stat-lbl">Jogos</span>
+            </div>
+        </div>
+        <div class="stat-chip">
+            <div class="stat-icon si-green"><i class="fas fa-signal"></i></div>
+            <div>
+                <span class="stat-val c-green">ONLINE</span>
+                <span class="stat-lbl">Status</span>
+            </div>
+        </div>
+        <div class="stat-chip">
+            <div class="stat-icon si-red"><i class="fas fa-fire"></i></div>
+            <div>
+                <span class="stat-val" id="hot-count">--</span>
+                <span class="stat-lbl">Em Alta</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div id="header-actions">
+        <button class="act-btn" onclick="toggleAbout(true)"><i class="fas fa-info-circle"></i> Sobre</button>
+        <button class="act-btn" onclick="toggleSettings(true)"><i class="fas fa-cog"></i> Configurações</button>
+        <a href="https://cadeaçãoplay.my.canva.site/whatsapp-online" target="_blank" class="act-btn g"><i class="fas fa-comment-dots"></i> Chat Online</a>
+        <a href="https://forms.gle/kT61Qy2ZAeoCWciJ6" target="_blank" class="act-btn g"><i class="fas fa-paper-plane"></i> Feedback</a>
+    </div>
+
+    <!-- FILTER -->
+    <div id="filter-bar">
+        <span class="filter-lbl"><i class="fas fa-filter"></i>&nbsp; Filtrar</span>
+        <select id="category-select" onchange="filterGames()">
+            <option value="all">Todos os Jogos</option>
+        </select>
+    </div>
+
+    <!-- FEATURED -->
+    <div class="sec-title"><i class="fas fa-star"></i> Destaque do Dia</div>
+    <div id="featured-container"><div id="featured-game"></div></div>
+
+    <!-- LIBRARY -->
+    <div class="sec-title"><i class="fas fa-th"></i> Biblioteca de Jogos</div>
+    <div id="game-grid">
+        <div id="loading"><i class="fas fa-spinner fa-spin"></i> Conectando aos servidores...</div>
+    </div>
+
+    <!-- STEAM MODAL -->
+    <div id="steamModal" class="steam-modal">
+        <div id="steamBg" class="steam-bg-blur"></div>
+        <div class="steam-container">
+            <div class="steam-nav">
+                <button class="btn-back" onclick="closeSteam()"><i class="fas fa-arrow-left"></i> VOLTAR</button>
+            </div>
+            <div class="steam-body">
+                <div class="steam-cover"><img id="steamCover" src="" alt="Capa"></div>
+                <div class="steam-info">
+                    <div id="steamTitle" class="steam-title"></div>
+                    <a id="steamPlayBtn" href="#" class="steam-play"><i class="fas fa-play"></i> JOGAR AGORA</a>
+                    <div class="steam-bio-box">
+                        <div class="bio-lbl">SOBRE ESTE JOGO</div>
+                        <div id="steamBio" class="bio-txt">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT MODAL -->
+    <div id="aboutModal" class="modal-overlay" onclick="if(event.target==this)toggleAbout(false)">
+        <div class="modal-box">
+            <button class="modal-close" onclick="toggleAbout(false)">&times;</button>
+            <div class="modal-title">📖 SOBRE O SITE</div>
+            <p>Bem-vindo ao <b>Cadê Ação Play</b> — edição Online!</p>
+            <p>👨‍💻 <b>Criador:</b> Feito pelo Patinho com ajuda de inteligências artificiais. Obrigado por jogar! 🦆💙</p>
+            <p>🧨 Uma coleção de jogos online e offline criados com IA, feitos para você se divertir muito!</p>
+            <p>🚀 <b>Jogar Online:</b> Clique no botão principal para entrar no modo online e desafiar amigos em tempo real! 🎉</p>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-overlay" onclick="if(event.target==this)toggleSettings(false)">
+        <div class="modal-box">
+            <button class="modal-close" onclick="toggleSettings(false)">&times;</button>
+            <div class="modal-title">⚙️ CONFIGURAÇÕES</div>
+            <div class="s-section">
+                <span class="s-label">🎨 Tema Visual</span>
+                <div class="theme-grid">
+                    <button class="theme-btn t-cyber"  onclick="mudarTema('cyber')">Cyber</button>
+                    <button class="theme-btn t-dark"   onclick="mudarTema('dark')">Escuro</button>
+                    <button class="theme-btn t-light"  onclick="mudarTema('light')">Claro</button>
+                </div>
+            </div>
+            <div class="s-section">
+                <span class="s-label">📚 Ordem da Biblioteca</span>
+                <select id="order-mode-select" class="s-select" onchange="mudarOrdemJogos(this.value)">
+                    <option value="predefined">Predefinida (A–Z)</option>
+                    <option value="random">Aleatória</option>
+                </select>
+            </div>
+            <div class="toggle-row">
+                <input type="checkbox" id="toggleOnlineCb" onchange="alternarBotaoOnlineManual(this.checked)">
+                <label for="toggleOnlineCb"><b>🌐 Atalho de Jogos Online</b></label>
+            </div>
+            <p style="font-size:.75rem;color:var(--text-dim);margin-top:8px;">*Liberado automaticamente após 5 min.</p>
+        </div>
+    </div>
+
+    <!-- FLOATING ONLINE -->
+    <a href="yr.html" id="btn-online-multiplayer"><i class="fas fa-globe"></i>&nbsp; JOGAR ONLINE</a>
+
+    <!-- AD -->
+    <div id="pato-ad-container">
+        <button class="ad-close" onclick="closeAd()">×</button>
+        <a id="pato-ad-link" href="#" target="_blank"><img id="pato-ad-img" src="" alt="Publicidade"></a>
+        <div class="ad-lbl">PUBLICIDADE</div>
+    </div>
+
+    <script>
+        const USER     = 'gustavotedeski2-create';
+        const REPO     = 'PatoPlayerGamez';
+        const FOLDER   = 'gamesonline';
+        const API_URL  = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+        const BASE_URL = `https://${USER}.github.io/${REPO}/${FOLDER}`;
+
+        // Clock
+        function tick() { document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('pt-BR'); }
+        setInterval(tick, 1000); tick();
+
+        // Fake live players
+        let players = 140 + Math.floor(Math.random() * 80);
+        function tickPlayers() {
+            players += Math.floor(Math.random() * 7) - 3;
+            if (players < 70) players = 70;
+            document.getElementById('live-players').textContent = players.toLocaleString('pt-BR');
+        }
+        setInterval(tickPlayers, 4000); tickPlayers();
+
+        // Modals
+        function toggleAbout(s)    { document.getElementById('aboutModal').style.display    = s ? 'flex' : 'none'; }
+        function toggleSettings(s) { document.getElementById('settingsModal').style.display = s ? 'flex' : 'none'; }
+        function closeSteam()      { document.getElementById('steamModal').style.display    = 'none'; }
+
+        // Theme
+        function mudarTema(t) {
+            document.body.classList.remove('theme-dark','theme-light');
+            if (t === 'dark')  document.body.classList.add('theme-dark');
+            if (t === 'light') document.body.classList.add('theme-light');
+            localStorage.setItem('patoPlayerTheme', t);
+        }
+
+        function alternarBotaoOnlineManual(v) {
+            document.getElementById('btn-online-multiplayer').style.setProperty('display', v ? 'inline-flex' : 'none', 'important');
+            localStorage.setItem('patoOnlineLiberado', v ? 'true' : 'false');
+        }
+
+        function mudarOrdemJogos(m) {
+            gameOrderMode = m;
+            localStorage.setItem('patoGameOrderMode', m);
+            filterGames();
+        }
+
+        function carregarConfiguracoesSalvas() {
+            mudarTema(localStorage.getItem('patoPlayerTheme') || 'cyber');
+            const online = localStorage.getItem('patoOnlineLiberado') === 'true';
+            document.getElementById('toggleOnlineCb').checked = online;
+            if (online) document.getElementById('btn-online-multiplayer').style.setProperty('display','inline-flex','important');
+            const ordem = localStorage.getItem('patoGameOrderMode') || 'predefined';
+            gameOrderMode = ordem;
+            document.getElementById('order-mode-select').value = ordem;
+        }
+
+        // 5-min timer
+        function iniciarCronometroJogatina() {
+            const LIM = 300;
+            let t = parseInt(localStorage.getItem('tempoPatoPlayer')) || 0;
+            const unlock = () => {
+                document.getElementById('btn-online-multiplayer').style.setProperty('display','inline-flex','important');
+                document.getElementById('toggleOnlineCb').checked = true;
+                localStorage.setItem('patoOnlineLiberado','true');
+            };
+            if (t >= LIM) { unlock(); return; }
+            const iv = setInterval(() => {
+                t++; localStorage.setItem('tempoPatoPlayer', t);
+                if (t >= LIM) { unlock(); alert('🎉 5 minutos jogados! Atalho Online liberado. Aproveite!'); clearInterval(iv); }
+            }, 1000);
+        }
+
+        // Fetch with timeout
+        function fetchTO(url, ms = 5000) {
+            const c = new AbortController();
+            const id = setTimeout(() => c.abort(), ms);
+            return fetch(url, { signal: c.signal }).finally(() => clearTimeout(id));
+        }
+
+        // Steam modal
+        async function openSteamDetails(title, img, play, bio) {
+            document.getElementById('steamTitle').textContent = title;
+            document.getElementById('steamCover').src = img;
+            document.getElementById('steamBg').style.backgroundImage = `url('${img}')`;
+            document.getElementById('steamPlayBtn').href = play;
+            document.getElementById('steamBio').textContent = 'Carregando informações...';
+            document.getElementById('steamModal').style.display = 'block';
+            if (bio) {
+                try {
+                    const r = await fetchTO(bio, 5000);
+                    document.getElementById('steamBio').textContent = r.ok ? await r.text() : 'Sem descrição disponível.';
+                } catch { document.getElementById('steamBio').textContent = 'Sem descrição disponível.'; }
+            } else {
+                document.getElementById('steamBio').textContent = 'Este jogo não possui descrição detalhada.';
+            }
+        }
+
+        // Load single game
+        async function loadSingleGame(item) {
+            try {
+                if (item.type !== 'dir' || !item.name.endsWith('.game')) return null;
+                const gameTitle = item.name.replace(/\.game$/i,'').replace(/-/g,' ');
+                const thumbUrl  = `${BASE_URL}/${item.name}/cover.png`;
+                const bioUrl    = `${BASE_URL}/${item.name}/bio.txt`;
+                let categoria   = 'Outros';
+                let playUrl     = `${BASE_URL}/${item.name}/index.html`;
+                try {
+                    const cr = await fetchTO(`${BASE_URL}/${item.name}/categoria.txt`, 3000);
+                    if (cr.ok) { const t = (await cr.text()).trim(); if (t) categoria = t; }
+                } catch {}
+                try {
+                    const fr = await fetchTO(item.url, 4000);
+                    if (fr.ok) {
+                        const fd = await fr.json();
+                        const hf = fd.find(f => f.name.endsWith('.html'));
+                        if (hf) playUrl = `${BASE_URL}/${item.name}/${hf.name}`;
+                    }
+                } catch {}
+                return { gameTitle, thumbUrl, playUrl, bioUrl, categoria };
+            } catch (e) { console.warn(`Falha "${item.name}":`, e); return null; }
+        }
+
+        let allGamesData = [], gameOrderMode = 'predefined';
+
+        async function loadGames() {
+            const el = document.getElementById('loading');
+            try {
+                const res = await fetchTO(API_URL, 10000);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const folders = data.filter(i => i.type === 'dir' && i.name.endsWith('.game'));
+                if (!folders.length) { el.innerHTML = '<i class="fas fa-box-open"></i> Nenhuma pasta .game encontrada.'; return; }
+
+                document.getElementById('game-count').textContent = folders.length;
+                document.getElementById('hot-count').textContent  = Math.max(1, Math.ceil(folders.length * 0.3));
+                el.style.display = 'none';
+                document.getElementById('filter-bar').style.display = 'flex';
+
+                const results = await Promise.allSettled(folders.map(loadSingleGame));
+                allGamesData = results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value);
+
+                if (!allGamesData.length) { el.style.display='block'; el.innerHTML='<i class="fas fa-exclamation-triangle"></i> Nenhum jogo carregado.'; return; }
+
+                const sel = document.getElementById('category-select');
+                [...new Set(allGamesData.map(g => g.categoria))].sort().forEach(cat => {
+                    const o = document.createElement('option'); o.value = cat; o.textContent = cat; sel.appendChild(o);
+                });
+
+                renderFeaturedGame(allGamesData);
+                renderGames(allGamesData);
+            } catch (err) {
+                el.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Erro: ${err.message}`;
+            }
+        }
+
+        function ph(title) { return `https://via.placeholder.com/300x180/0b0f1a/00ffe7?text=${encodeURIComponent(title)}`; }
+
+        function renderGames(list) {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+            if (!list.length) { grid.innerHTML = '<div id="loading">Nenhum jogo encontrado.</div>'; return; }
+            getOrdered(list).forEach(g => {
+                const c = document.createElement('div');
+                c.className = 'game-card';
+                c.onclick = () => openSteamDetails(g.gameTitle, g.thumbUrl, g.playUrl, g.bioUrl);
+                c.innerHTML = `
+                    <img src="${g.thumbUrl}" onerror="this.onerror=null;this.src='${ph(g.gameTitle)}'" alt="${g.gameTitle}">
+                    <div class="card-body">
+                        <div class="card-cat">${g.categoria}</div>
+                        <div class="card-title">${g.gameTitle}</div>
+                        <div class="card-play" onclick="event.stopPropagation();window.location.href='${g.playUrl}'">
+                            <i class="fas fa-play"></i> JOGAR
+                        </div>
+                    </div>`;
+                grid.appendChild(c);
+            });
+        }
+
+        function renderFeaturedGame(list) {
+            const w = document.getElementById('featured-game'); w.innerHTML = '';
+            if (!list.length) { w.innerHTML = '<p style="text-align:center;color:var(--text-dim)">Sem destaque.</p>'; return; }
+            const f = featuredOfDay(list);
+            const c = document.createElement('div');
+            c.className = 'featured-card';
+            c.onclick = () => openSteamDetails(f.gameTitle, f.thumbUrl, f.playUrl, f.bioUrl);
+            c.innerHTML = `
+                <div class="feat-badge">⭐ DESTAQUE DO DIA</div>
+                <img src="${f.thumbUrl}" onerror="this.onerror=null;this.src='${ph(f.gameTitle)}'" alt="${f.gameTitle}">
+                <div class="feat-info">
+                    <div>
+                        <div class="feat-title">${f.gameTitle}</div>
+                        <div class="feat-sub">${f.categoria}</div>
+                    </div>
+                    <button class="feat-play" onclick="event.stopPropagation();window.location.href='${f.playUrl}'">
+                        <i class="fas fa-play"></i> JOGAR
+                    </button>
+                </div>`;
+            w.appendChild(c);
+        }
+
+        function getOrdered(l) {
+            if (gameOrderMode === 'random') return shuffle(l);
+            return [...l].sort((a,b) => a.gameTitle.localeCompare(b.gameTitle,'pt-BR'));
+        }
+
+        function featuredOfDay(l) { return l[Math.abs(hash(new Date().toISOString().slice(0,10))) % l.length]; }
+
+        function hash(s) {
+            let h = 0;
+            for (let i = 0; i < s.length; i++) { h = ((h<<5)-h)+s.charCodeAt(i); h|=0; }
+            return h;
+        }
+
+        function shuffle(l) {
+            const a = [...l];
+            for (let i = a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+            return a;
+        }
+
+        function filterGames() {
+            const s = document.getElementById('category-select').value;
+            const f = s === 'all' ? allGamesData : allGamesData.filter(g => g.categoria === s);
+            renderFeaturedGame(f); renderGames(f);
+        }
+
+        // Ads
+        async function loadPatoAds() {
+            try {
+                const r = await fetchTO(`https://api.github.com/repos/${USER}/${REPO}/contents/ads`, 5000);
+                if (!r.ok) return;
+                const d = await r.json();
+                const fds = d.filter(i => i.type === 'dir');
+                if (!fds.length) return;
+                const ad = fds[Math.floor(Math.random()*fds.length)];
+                const cr = await fetchTO(`https://api.github.com/repos/${USER}/${REPO}/contents/ads/${ad.name}`, 5000);
+                if (!cr.ok) return;
+                const cd = await cr.json();
+                const img  = cd.find(f => /\.(png|jpe?g|gif)$/i.test(f.name));
+                const link = cd.find(f => f.name === 'link.txt');
+                if (!img||!link) return;
+                const lr = await fetchTO(link.download_url, 3000);
+                if (!lr.ok) return;
+                document.getElementById('pato-ad-img').src   = img.download_url;
+                document.getElementById('pato-ad-link').href = (await lr.text()).trim();
+                setTimeout(() => { document.getElementById('pato-ad-container').style.display = 'block'; }, 1500);
+            } catch {}
+        }
+
+        function closeAd() { document.getElementById('pato-ad-container').style.display = 'none'; }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarConfiguracoesSalvas();
+            iniciarCronometroJogatina();
+            loadGames();
+            loadPatoAds();
+        });
+    </script>
+</body>
+</html>
