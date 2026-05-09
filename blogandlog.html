@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Site De Jogos - Blog</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; }
+        .post { background: #1e1e1e; padding: 25px; border-radius: 10px; margin-bottom: 30px; border-left: 6px solid #ff4500; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h1 { color: #ff4500; text-align: center; text-transform: uppercase; }
+        h2 { color: #ff4500; margin-top: 0; text-transform: capitalize; }
+        .conteudo-post { white-space: pre-wrap; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎮 Meu Site De Jogos 🕹️</h1>
+        <div id="blog-posts">Carregando novidades...</div>
+    </div>
+
+    <script>
+        async function carregarBlog() {
+            const container = document.getElementById('blog-posts');
+            try {
+                // 1. Busca a lista de arquivos
+                const response = await fetch('posts/lista_posts.json');
+                const posts = await response.json();
+                
+                container.innerHTML = ''; // Limpa o "Carregando"
+
+                // 2. Para cada post na lista, busca o conteúdo
+                for (const nomeArquivo of posts) {
+                    const postRes = await fetch(`posts/${nomeArquivo}`);
+                    const texto = await postRes.text();
+                    
+                    // Formata o título removendo o .txt
+                    const titulo = nomeArquivo.replace('.txt', '').replace(/-/g, ' ');
+
+                    // 3. Cria o HTML do post
+                    const postElement = document.createElement('article');
+                    postElement.className = 'post';
+                    postElement.innerHTML = `
+                        <h2>${titulo}</h2>
+                        <div class="conteudo-post">${texto}</div>
+                    `;
+                    container.appendChild(postElement);
+                }
+            } catch (erro) {
+                container.innerHTML = '<p>Erro ao carregar os posts. Verifique o arquivo lista_posts.json.</p>';
+                console.error(erro);
+            }
+        }
+
+        carregarBlog();
+    </script>
+</body>
+</html>
