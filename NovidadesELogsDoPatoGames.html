@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PatoPlayerGamez - Blog Minimalista</title>
+    <title>PatoPlayerGamez - Blog</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
+        body { font-family: sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
         .container { max-width: 800px; margin: auto; }
         h1 { color: #ff4500; text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; }
         .post-card { background: #1e1e1e; padding: 25px; border-radius: 10px; margin-bottom: 25px; border-left: 5px solid #ff4500; }
@@ -25,32 +25,36 @@
         const USER = 'gustavotedeski2-create';
         const REPO = 'PatoPlayerGamez';
 
-        async function carregarBlogSimples() {
+        async function carregarBlog() {
             const container = document.getElementById('blog-container');
             try {
-                // Busca todos os arquivos dentro da pasta /posts [cite: 31]
+                // 1. Busca os arquivos dentro da pasta /posts
                 const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/posts`);
                 const arquivos = await res.json();
                 
                 container.innerHTML = '';
 
-                // Filtra apenas arquivos que terminam em .txt [cite: 28]
+                // 2. Filtra apenas arquivos .txt
                 const postsTxt = arquivos.filter(f => f.name.endsWith('.txt')).reverse();
 
+                if (postsTxt.length === 0) {
+                    container.innerHTML = '<p>Nenhum arquivo .txt encontrado na pasta /posts.</p>';
+                    return;
+                }
+
                 for (const arquivo of postsTxt) {
-                    // Busca o conteúdo de texto de cada arquivo [cite: 45]
+                    // 3. Busca o conteúdo do texto
                     const conteudoRes = await fetch(arquivo.download_url);
                     const texto = await conteudoRes.text();
 
-                    // Busca a data da última alteração do arquivo via API 
+                    // 4. Busca a data do arquivo no GitHub
                     const commitRes = await fetch(`https://api.github.com/repos/${USER}/${REPO}/commits?path=posts/${arquivo.name}&page=1&per_page=1`);
                     const commitData = await commitRes.json();
                     const dataPost = new Date(commitData[0].commit.committer.date).toLocaleDateString('pt-BR');
 
-                    // Monta o post apenas com Texto e Data 
                     const postHtml = `
                         <article class="post-card">
-                            <div class="post-meta">📅 ${dataPost}</div>
+                            <div class="post-meta">📅 Postado em: ${dataPost}</div>
                             <h2>${arquivo.name.replace('.txt', '').replace(/-/g, ' ')}</h2>
                             <div class="texto">${texto}</div>
                         </article>
@@ -58,10 +62,10 @@
                     container.innerHTML += postHtml;
                 }
             } catch (e) {
-                container.innerHTML = '<p>Erro ao carregar posts. Certifique-se de que a pasta "posts" existe.</p>';
+                container.innerHTML = '<p>Erro ao conectar com o GitHub. Verifique as configurações.</p>';
             }
         }
-        carregarBlogSimples();
+        carregarBlog();
     </script>
 </body>
 </html>
