@@ -2,57 +2,55 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Site De Jogos - Blog</title>
+    <title>Meu Site De Jogos - Automático</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; line-height: 1.6; }
-        .container { max-width: 800px; margin: auto; }
-        .post { background: #1e1e1e; padding: 25px; border-radius: 10px; margin-bottom: 30px; border-left: 6px solid #ff4500; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h1 { color: #ff4500; text-align: center; text-transform: uppercase; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
+        .post { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #ff4500; }
         h2 { color: #ff4500; margin-top: 0; text-transform: capitalize; }
-        .conteudo-post { white-space: pre-wrap; font-size: 1.1em; }
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <h1>🎮 Meu Site De Jogos 🕹️</h1>
-        <div id="blog-posts">Carregando novidades...</div>
-    </div>
+    <h1>🕹️ Blog Automático de Jogos</h1>
+    <div id="blog-posts">Sincronizando com o GitHub...</div>
 
     <script>
-        async function carregarBlog() {
+        // CONFIGURAÇÃO: Coloque seu usuário e o nome do seu repositório aqui
+        const USUARIO = 'SEU_USUARIO_AQUI';
+        const REPO = 'NOME_DO_REPOSITORIO_AQUI';
+
+        async function carregarBlogAutomatico() {
             const container = document.getElementById('blog-posts');
+            const urlAPI = `https://api.github.com/repos/${USUARIO}/${REPO}/contents/posts`;
+
             try {
-                // 1. Busca a lista de arquivos
-                const response = await fetch('posts/lista_posts.json');
-                const posts = await response.json();
+                // 1. Pergunta para a API do GitHub o que tem na pasta 'posts'
+                const response = await fetch(urlAPI);
+                const arquivos = await response.json();
                 
-                container.innerHTML = ''; // Limpa o "Carregando"
+                container.innerHTML = '';
 
-                // 2. Para cada post na lista, busca o conteúdo
-                for (const nomeArquivo of posts) {
-                    const postRes = await fetch(`posts/${nomeArquivo}`);
-                    const texto = await postRes.text();
-                    
-                    // Formata o título removendo o .txt
-                    const titulo = nomeArquivo.replace('.txt', '').replace(/-/g, ' ');
+                // 2. Filtra apenas arquivos .txt e inverte para os novos virem primeiro
+                const postsTxt = arquivos.filter(f => f.name.endsWith('.txt')).reverse();
 
-                    // 3. Cria o HTML do post
+                for (const arquivo of postsTxt) {
+                    // 3. Busca o conteúdo real do arquivo
+                    const conteudoRes = await fetch(arquivo.download_url);
+                    const texto = await conteudoRes.text();
+
                     const postElement = document.createElement('article');
                     postElement.className = 'post';
                     postElement.innerHTML = `
-                        <h2>${titulo}</h2>
-                        <div class="conteudo-post">${texto}</div>
+                        <h2>${arquivo.name.replace('.txt', '').replace(/-/g, ' ')}</h2>
+                        <div>${texto}</div>
                     `;
                     container.appendChild(postElement);
                 }
             } catch (erro) {
-                container.innerHTML = '<p>Erro ao carregar os posts. Verifique o arquivo lista_posts.json.</p>';
-                console.error(erro);
+                container.innerHTML = '<p>Erro ao ler a pasta de posts automática.</p>';
             }
         }
 
-        carregarBlog();
+        carregarBlogAutomatico();
     </script>
 </body>
 </html>
