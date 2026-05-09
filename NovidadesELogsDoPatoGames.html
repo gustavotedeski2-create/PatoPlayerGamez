@@ -2,55 +2,82 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Site De Jogos - Automático</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PatoPlayerGamez - Blog Automático</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
-        .post { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #ff4500; }
-        h2 { color: #ff4500; margin-top: 0; text-transform: capitalize; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { color: #ff4500; text-align: center; text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        #blog-container { margin-top: 30px; }
+        .post-card { background: #1e1e1e; border-radius: 12px; margin-bottom: 40px; overflow: hidden; border: 1px solid #333; transition: transform 0.2s; }
+        .post-card:hover { transform: translateY(-5px); border-color: #ff4500; }
+        .post-img { width: 100%; max-height: 450px; object-fit: cover; display: block; background: #252525; }
+        .post-content { padding: 25px; }
+        .post-meta { color: #ff4500; font-weight: bold; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase; }
+        h2 { margin: 0 0 15px 0; color: #fff; text-transform: capitalize; }
+        .texto { white-space: pre-wrap; line-height: 1.8; color: #ccc; font-size: 1.05em; }
+        .loading { text-align: center; font-style: italic; color: #888; }
     </style>
 </head>
 <body>
-    <h1>🕹️ Blog Automático de Jogos</h1>
-    <div id="blog-posts">Sincronizando com o GitHub...</div>
+
+    <div class="container">
+        <h1>🎮 PatoPlayerGamez</h1>
+        <div id="blog-container" class="loading">Sincronizando com o GitHub...</div>
+    </div>
 
     <script>
-        // CONFIGURAÇÃO: Coloque seu usuário e o nome do seu repositório aqui
-        const USUARIO = 'gustavotedeski2-create';
+        // Dados fornecidos [cite: 51]
+        const USER = 'gustavotedeski2-create';
         const REPO = 'PatoPlayerGamez';
 
-        async function carregarBlogAutomatico() {
-            const container = document.getElementById('blog-posts');
-            const urlAPI = `https://api.github.com/repos/${USUARIO}/${REPO}/contents/posts`;
-
+        async function carregarBlog() {
+            const container = document.getElementById('blog-container');
             try {
-                // 1. Pergunta para a API do GitHub o que tem na pasta 'posts'
-                const response = await fetch(urlAPI);
-                const arquivos = await response.json();
+                // Busca as pastas dentro de /posts [cite: 42]
+                const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/posts`);
+                const itens = await res.json();
                 
                 container.innerHTML = '';
 
-                // 2. Filtra apenas arquivos .txt e inverte para os novos virem primeiro
-                const postsTxt = arquivos.filter(f => f.name.endsWith('.txt')).reverse();
+                // Filtra apenas pastas que terminam em ".post" 
+                const pastasPost = itens.filter(i => i.type === 'dir' && i.name.endsWith('.post')).reverse();
 
-                for (const arquivo of postsTxt) {
-                    // 3. Busca o conteúdo real do arquivo
-                    const conteudoRes = await fetch(arquivo.download_url);
-                    const texto = await conteudoRes.text();
+                for (const pasta of pastasPost) {
+                    const detalhesRes = await fetch(pasta.url);
+                    const arquivosPost = await detalhesRes.json();
 
-                    const postElement = document.createElement('article');
-                    postElement.className = 'post';
-                    postElement.innerHTML = `
-                        <h2>${arquivo.name.replace('.txt', '').replace(/-/g, ' ')}</h2>
-                        <div>${texto}</div>
-                    `;
-                    container.appendChild(postElement);
+                    // Identifica o texto e a primeira imagem que encontrar 
+                    const arqTxt = arquivosPost.find(f => f.name === 'post.txt');
+                    const arqImg = arquivosPost.find(f => f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i));
+
+                    if (arqTxt) {
+                        const texto = await (await fetch(arqTxt.download_url)).text();
+                        
+                        // Puxa a data do último commit daquela pasta específica [cite: 46]
+                        const commitRes = await fetch(`https://api.github.com/repos/${USER}/${REPO}/commits?path=posts/${pasta.name}&page=1&per_page=1`);
+                        const commitData = await commitRes.json();
+                        const dataPost = new Date(commitData[0].commit.committer.date).toLocaleDateString('pt-BR');
+
+                        const postHtml = `
+                            <article class="post-card">
+                                ${arqImg ? `<img src="${arqImg.download_url}" class="post-img" alt="Imagem do post">` : ''}
+                                <div class="post-content">
+                                    <div class="post-meta">📅 Publicado em: ${dataPost}</div>
+                                    <h2>${pasta.name.replace('.post', '').replace(/-/g, ' ')}</h2>
+                                    <div class="texto">${texto}</div>
+                                </div>
+                            </article>
+                        `;
+                        container.innerHTML += postHtml;
+                    }
                 }
-            } catch (erro) {
-                container.innerHTML = '<p>Erro ao ler a pasta de posts automática.</p>';
+            } catch (e) {
+                container.innerHTML = '<p>Erro ao carregar o blog. Verifique se a pasta "/posts" existe no seu repositório.</p>';
+                console.error(e);
             }
         }
-
-        carregarBlogAutomatico();
+        carregarBlog();
     </script>
 </body>
 </html>
