@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Tycoon Pro - Edição Interativa</title>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --secondary: #2c3e50;
+            --accent: #f1c40f;
+            --bg: #0f0c29;
+            --text: #ecf0f1;
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #24243e, #302b63, #0f0c29);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 95vw;
+            max-width: 900px;
+            height: 90vh;
+            background: rgba(44, 62, 80, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--primary);
+        }
+
+        .screen { display: none; padding: 30px; flex-direction: column; align-items: center; height: 100%; overflow-y: auto; }
+        .active { display: flex; }
+
+        /* HUD & BARS */
+        #hud {
+            display: flex;
+            justify-content: space-around;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 20px 20px 0 0;
+            border-bottom: 4px solid var(--primary);
+        }
+        .bar-container { width: 200px; height: 20px; background: #444; border-radius: 10px; margin-top: 5px; position: relative; }
+        #energy-bar { width: 100%; height: 100%; background: var(--accent); border-radius: 10px; transition: width 0.2s; }
+
+        /* BOTÃO DE GRAVAR & COOLDOWN */
+        .mic-section { position: relative; margin: 40px 0; }
+        .record-area {
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, #e74c3c, #c0392b);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; border: 8px solid #333;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.4);
+            transition: 0.1s;
+            user-select: none;
+        }
+        .record-area.disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.5; }
+        .record-area:active:not(.disabled) { transform: scale(0.92); }
+
+        /* MINI-GAME POPUP */
+        #minigame-overlay {
+            position: absolute; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 20px;
+        }
+        .target {
+            width: 80px; height: 80px; background: var(--accent);
+            border-radius: 50%; position: absolute;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            color: black; font-weight: bold; animation: pulse 1s infinite;
+        }
+
+        /* UI ELEMENTS */
+        .btn {
+            background: var(--primary); color: white; border: none;
+            padding: 12px 30px; margin: 8px; border-radius: 25px;
+            cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .btn:hover { background: #6c3483; transform: translateY(-2px); }
+        .upgrade-item {
+            background: rgba(255,255,255,0.05); padding: 12px;
+            margin: 8px 0; border-radius: 10px; display: flex;
+            justify-content: space-between; align-items: center; width: 100%;
+        }
+
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <div id="minigame-overlay">
+        <h2 style="color: var(--accent)">⚡ RUIDO NA LINHA! ⚡</h2>
+        <p>Clique no alvo rápido para limpar o áudio!</p>
+        <div id="minigame-area" style="position: relative; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 15px;">
+            <div id="target" class="target" onclick="hitTarget()">CLIQUE!</div>
+        </div>
+    </div>
+
+    <div id="menu-screen" class="screen active">
+        <h1 style="font-size: 3.5rem; color: var(--accent); text-shadow: 3px 3px #000;">🎙️ PODCAST TYCOON</h1>
+        <button class="btn" onclick="changeScreen('game-screen')">INICIAR GRAVAÇÃO</button>
+        <button class="btn" onclick="changeScreen('tutorial-screen')">TUTORIAL</button>
+        <button class="btn" onclick="changeScreen('settings-screen')">CONFIGURAÇÕES</button>
+        <button class="btn" onclick="changeScreen('about-screen')">SOBRE</button>
+    </div>
+
+    <div id="game-screen" class="screen" style="padding:0;">
+        <div id="hud">
+            <div>💰 R$: <span id="money">0</span></div>
+            <div>👁️ Views: <span id="views">0</span></div>
+            <div>
+                🔋 Energia do Host
+                <div class="bar-container"><div id="energy-bar"></div></div>
+            </div>
+        </div>
+
+        <div style="overflow-y: auto; width: 100%; padding: 20px; box-sizing: border-box; text-align: center;">
+            <div class="mic-section">
+                <div id="mic-btn" class="record-area" onclick="record()">
+                    <span id="mic-text" style="font-weight: bold; font-size: 1.5rem;">REC</span>
+                </div>
+                <div id="cooldown-timer" style="color: var(--danger); font-weight: bold; margin-top: 10px; height: 20px;"></div>
+            </div>
+
+            <div id="upgrades-container" style="width: 100%; max-width: 500px; margin: 0 auto;">
+                </div>
+            
+            <button class="btn" onclick="changeScreen('menu-screen')" style="margin-top: 30px; opacity: 0.6;">MENU</button>
+        </div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+        <h2>CONFIGURAÇÕES DE SAVE</h2>
+        <button class="btn" onclick="saveGame()">SALVAR NO NAVEGADOR</button>
+        <button class="btn" onclick="exportSave()">EXPORTAR .DAT</button>
+        <input type="file" id="importFile" accept=".dat" style="margin: 20px 0;">
+        <button class="btn" onclick="importSave()">IMPORTAR .DAT</button>
+        <button class="btn" onclick="resetGame()" style="background: var(--danger);">RESET TOTAL</button>
+        <button class="btn" onclick="changeScreen('menu-screen')">VOLTAR</button>
+    </div>
+
+    <div id="tutorial-screen" class="screen">
+        <h2>COMO JOGAR</h2>
+        <ul style="text-align: left; line-height: 1.6;">
+            <li><b>Clique em REC:</b> Gera views e dinheiro, mas gasta <b>Energia</b>.</li>
+            <li><b>Fadiga:</b> Se a energia zerar, você entra em <i>Cooldown</i> de 5 segundos.</li>
+            <li><b>Eventos:</b> Às vezes, o áudio falha! Clique no círculo amarelo para ganhar um bônus de 10x views.</li>
+            <li><b>Upgrades:</b> Melhore seu microfone para gastar menos energia e ganhar mais.</li>
+        </ul>
+        <button class="btn" onclick="changeScreen('menu-screen')">ENTENDI</button>
+    </div>
+
+    <div id="about-screen" class="screen">
+        <h2>SOBRE O JOGO</h2>
+        <p>Podcast Tycoon v2.0 - Interativo</p>
+        <p>Criado para simular o cansaço real de um podcaster!</p>
+        <button class="btn" onclick="changeScreen('menu-screen')">VOLTAR</button>
+    </div>
+</div>
+
+<script>
+    let gameState = {
+        money: 0, views: 0, energy: 100, 
+        maxEnergy: 100, clickPower: 1, 
+        isCooldown: false, autoViews: 0,
+        upgrades: [
+            { id: 0, name: "Água Gelada", desc: "Recupera energia mais rápido", cost: 100, count: 0, type: 'energy' },
+            { id: 1, name: "Microfone Gamer", desc: "+2 Views por clique", cost: 250, count: 0, type: 'click' },
+            { id: 2, name: "Estagiário de Edição", desc: "+5 Views auto/seg", cost: 1000, count: 0, type: 'auto' },
+            { id: 3, name: "Cafeína Pura", desc: "Aumenta Energia Máxima", cost: 5000, count: 0, type: 'max' }
+        ]
+    };
+
+    function init() {
+        const saved = localStorage.getItem('podcastTycoon_ProSave');
+        if(saved) gameState = JSON.parse(saved);
+        
+        renderUpgrades();
+        updateUI();
+        
+        // Loop Principal
+        setInterval(() => {
+            // Auto Views
+            if(gameState.autoViews > 0) {
+                gameState.views += gameState.autoViews;
+                gameState.money += (gameState.autoViews * 0.5);
+            }
+            
+            // Recuperação de Energia
+            if(!gameState.isCooldown && gameState.energy < gameState.maxEnergy) {
+                let recovery = 1 + (gameState.upgrades[0].count * 0.5);
+                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + recovery);
+            }
+            
+            // Chance de Mini-game (1% a cada segundo)
+            if(Math.random() < 0.02 && !gameState.isCooldown && document.getElementById('game-screen').classList.contains('active')) {
+                startMinigame();
+            }
+
+            updateUI();
+        }, 1000);
+    }
+
+    function record() {
+        if(gameState.isCooldown) return;
+
+        if(gameState.energy > 5) {
+            gameState.views += gameState.clickPower;
+            gameState.money += (gameState.clickPower * 0.3);
+            gameState.energy -= 4; // Custo de energia por clique
+            
+            if(gameState.energy <= 0) startCooldown();
+        } else {
+            startCooldown();
+        }
+        updateUI();
+    }
+
+    function startCooldown() {
+        gameState.isCooldown = true;
+        gameState.energy = 0;
+        let timeLeft = 5;
+        document.getElementById('mic-btn').classList.add('disabled');
+        document.getElementById('mic-text').innerText = "EXAUSTO";
+        
+        const timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('cooldown-timer').innerText = `Descansando... ${timeLeft}s`;
+            if(timeLeft <= 0) {
+                clearInterval(timer);
+                gameState.isCooldown = false;
+                gameState.energy = 20; // Volta com um pouco de fôlego
+                document.getElementById('mic-btn').classList.remove('disabled');
+                document.getElementById('mic-text').innerText = "REC";
+                document.getElementById('cooldown-timer').innerText = "";
+            }
+        }, 1000);
+    }
+
+    // MINI-GAME LOGIC
+    function startMinigame() {
+        const overlay = document.getElementById('minigame-overlay');
+        const target = document.getElementById('target');
+        overlay.style.display = 'flex';
+        
+        // Posicionamento aleatório
+        target.style.top = Math.random() * 200 + 'px';
+        target.style.left = Math.random() * 200 + 'px';
+    }
+
+    function hitTarget() {
+        const bonus = Math.floor(gameState.views * 0.1) + 50;
+        gameState.views += bonus;
+        gameState.money += bonus * 0.2;
+        document.getElementById('minigame-overlay').style.display = 'none';
+        alert("Áudio Limpo! Bônus de " + bonus + " views recebido!");
+    }
+
+    // UPGRADES
+    function buyUpgrade(id) {
+        const up = gameState.upgrades[id];
+        if(gameState.money >= up.cost) {
+            gameState.money -= up.cost;
+            up.count++;
+            
+            if(up.type === 'click') gameState.clickPower += 3;
+            if(up.type === 'auto') gameState.autoViews += 5;
+            if(up.type === 'max') gameState.maxEnergy += 50;
+            
+            up.cost = Math.floor(up.cost * 1.6);
+            renderUpgrades();
+            saveGame();
+        }
+    }
+
+    // UI & SAVE
+    function updateUI() {
+        document.getElementById('money').innerText = Math.floor(gameState.money);
+        document.getElementById('views').innerText = Math.floor(gameState.views);
+        const energyPct = (gameState.energy / gameState.maxEnergy) * 100;
+        document.getElementById('energy-bar').style.width = energyPct + "%";
+    }
+
+    function renderUpgrades() {
+        const container = document.getElementById('upgrades-container');
+        container.innerHTML = '<h3>Melhorias do Estúdio</h3>';
+        gameState.upgrades.forEach(up => {
+            container.innerHTML += `
+                <div class="upgrade-item">
+                    <div style="text-align:left">
+                        <b>${up.name}</b> [Lv ${up.count}]<br>
+                        <small>${up.desc}</small>
+                    </div>
+                    <button class="btn" style="min-width:100px" onclick="buyUpgrade(${up.id})">R$ ${up.cost}</button>
+                </div>
+            `;
+        });
+    }
+
+    function changeScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // SISTEMA DE ARQUIVOS
+    function saveGame() {
+        localStorage.setItem('podcastTycoon_ProSave', JSON.stringify(gameState));
+    }
+
+    function exportSave() {
+        const data = btoa(JSON.stringify(gameState)); // Encode para .dat
+        const blob = new Blob([data], {type: 'application/octet-stream'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'podcast_pro_save.dat';
+        a.click();
+    }
+
+    function importSave() {
+        const file = document.getElementById('importFile').files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            gameState = JSON.parse(atob(e.target.result));
+            renderUpgrades();
+            updateUI();
+            alert("Sucesso!");
+        };
+        reader.readAsText(file);
+    }
+
+    function resetGame() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+
+    window.onload = init;
+</script>
+</body>
+</html>

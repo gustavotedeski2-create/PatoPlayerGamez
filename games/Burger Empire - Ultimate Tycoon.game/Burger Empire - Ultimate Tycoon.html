@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burger Empire: Ultimate Tycoon 🍔</title>
+    <style>
+        :root {
+            --gold: #f1c40f;
+            --orange: #e67e22;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --dark: #1a1a1a;
+            --panel: #2d3436;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--dark);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- MENUS E TELAS --- */
+        .screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 100;
+            background: radial-gradient(circle, #34495e 0%, #1a1a1a 100%);
+            transition: 0.5s;
+        }
+
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        .menu-card {
+            background: var(--panel);
+            padding: 40px;
+            border-radius: 20px;
+            border: 4px solid var(--orange);
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            max-width: 500px;
+        }
+
+        /* --- INTERFACE DO JOGO --- */
+        #main-ui {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .hud-top {
+            grid-column: 1 / 4;
+            background: #000;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            border-radius: 10px;
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .panel {
+            background: var(--panel);
+            border-radius: 15px;
+            padding: 15px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }
+
+        /* --- ANIMAÇÕES E ESTILO --- */
+        .burger-clicker {
+            font-size: 8rem;
+            cursor: pointer;
+            transition: 0.1s;
+            user-select: none;
+            filter: drop-shadow(0 10px 0 #a04000);
+        }
+
+        .burger-clicker:active {
+            transform: scale(0.9) translateY(10px);
+            filter: drop-shadow(0 0 0 #a04000);
+        }
+
+        .upgrade-card {
+            background: #3d3d3d;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 5px solid var(--orange);
+        }
+
+        button {
+            background: var(--orange);
+            color: white; border: none;
+            padding: 12px; border-radius: 8px;
+            font-weight: bold; cursor: pointer;
+            width: 100%; transition: 0.3s;
+        }
+
+        button:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        button:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+        .btn-config { background: #95a5a6; margin-top: 10px; }
+        .btn-save { background: var(--success); }
+        .btn-export { background: #3498db; }
+        
+        /* Notificações flutuantes */
+        .particle {
+            position: absolute;
+            color: var(--success);
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-menu" class="screen">
+        <div class="menu-card">
+            <h1 style="font-size: 3rem; margin: 0;">🍔 BURGER IMPERIUM</h1>
+            <p>O simulador de franquia definitivo</p>
+            <button onclick="startGame()" style="font-size: 1.5rem; margin-bottom: 10px;">JOGAR ▶️</button>
+            <button onclick="toggleScreen('tutorial-screen', true)" style="background: #7f8c8d;">COMO JOGAR? ❓</button>
+            <button onclick="toggleScreen('about-screen', true)" style="background: #7f8c8d; margin-top:10px;">SOBRE ℹ️</button>
+        </div>
+    </div>
+
+    <div id="tutorial-screen" class="screen hidden">
+        <div class="menu-card">
+            <h2>Manual do Chef 👨‍🍳</h2>
+            <ul style="text-align: left; line-height: 1.6;">
+                <li>Clique no Hamburguer para produzir manualmente.</li>
+                <li>Contrate funcionários para automação.</li>
+                <li>Melhore as esteiras para vender mais rápido.</li>
+                <li>O jogo salva automaticamente a cada 60s!</li>
+            </ul>
+            <button onclick="toggleScreen('tutorial-screen', false)">ENTENDIDO!</button>
+        </div>
+    </div>
+
+    <div id="about-screen" class="screen hidden">
+        <div class="menu-card">
+            <h2>Sobre o Jogo 📖</h2>
+            <p>Desenvolvido em HTML5 Puro.</p>
+            <p>Versão: 2.0 - Magnata Industrial</p>
+            <p>Um desafio de gerenciamento e cliques infinitos!</p>
+            <button onclick="toggleScreen('about-screen', false)">VOLTAR</button>
+        </div>
+    </div>
+
+    <div id="config-screen" class="screen hidden">
+        <div class="menu-card" style="width: 300px;">
+            <h2>Configurações ⚙️</h2>
+            <button class="btn-save" onclick="saveGame()">💾 SALVAR AGORA</button>
+            <button class="btn-export" onclick="exportData()" style="margin-top:10px;">📤 EXPORTAR .DAT</button>
+            <button onclick="document.getElementById('fileInput').click()" style="margin-top:10px; background:#8e44ad;">📥 IMPORTAR .DAT</button>
+            <input type="file" id="fileInput" style="display:none" onchange="importData(event)">
+            <button class="btn-danger" onclick="resetGame()" style="background:var(--danger); margin-top: 20px;">🧨 RESET TOTAL</button>
+            <button onclick="toggleScreen('config-screen', false)" style="margin-top: 20px;">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="game-ui" class="hidden" style="height: 100%;">
+        <div id="main-ui">
+            <div class="hud-top">
+                <div class="stat">💵 Dinheiro: <span id="money" class="success" style="color: var(--success); font-weight: bold;">$0</span></div>
+                <div class="stat">📦 Estoque: <span id="stock">0</span> 🍔</div>
+                <div class="stat">🏭 Produção: <span id="prod-rate">0</span>/s</div>
+            </div>
+
+            <div class="panel">
+                <h3 style="text-align:center">👷 STAFF</h3>
+                <div id="staff-list"></div>
+            </div>
+
+            <div id="factory" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                <div class="burger-clicker" onclick="handleManualClick(event)">🍔</div>
+                <p style="color: #aaa;">Toque para Grelhar!</p>
+                <div id="conveyor-visual" style="width: 80%; height: 10px; background: #333; border-radius: 5px; margin-top: 20px;"></div>
+                <button class="btn-config" onclick="toggleScreen('config-screen', true)" style="width: 200px;">⚙️ Opções e Backup</button>
+            </div>
+
+            <div class="panel">
+                <h3 style="text-align:center">🚀 UPGRADES</h3>
+                <div id="upgrade-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BANCO DE DADOS DO JOGO ---
+        let game = {
+            money: 100,
+            stock: 0,
+            clickPower: 1,
+            autoProd: 0,
+            sellRate: 1,
+            burgerPrice: 10,
+            staff: {
+                trainee: { name: "Estagiário", count: 0, cost: 50, power: 1, icon: "👶" },
+                chef: { name: "Chef Pro", count: 0, cost: 250, power: 8, icon: "👨‍🍳" },
+                robot: { name: "Cyborg-Grill", count: 0, cost: 1200, power: 45, icon: "🤖" }
+            },
+            upgrades: {
+                marketing: { name: "Marketing Viral", level: 0, cost: 500, desc: "+$5 por venda", icon: "📢" },
+                conveyor: { name: "Esteira Turbo", level: 0, cost: 300, desc: "Vende +2 por vez", icon: "⚙️" }
+            }
+        };
+
+        // --- SISTEMA DE TELAS ---
+        function toggleScreen(id, show) {
+            const el = document.getElementById(id);
+            if(show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function startGame() {
+            toggleScreen('start-menu', false);
+            document.getElementById('game-ui').classList.remove('hidden');
+            renderStore();
+            updateUI();
+        }
+
+        // --- LÓGICA DE GAMEPLAY ---
+        function handleManualClick(e) {
+            game.stock += game.clickPower;
+            createParticle(e.clientX, e.clientY, `+${game.clickPower}`);
+            updateUI();
+        }
+
+        function buyStaff(key) {
+            let s = game.staff[key];
+            if(game.money >= s.cost) {
+                game.money -= s.cost;
+                s.count++;
+                game.autoProd += s.power;
+                s.cost = Math.floor(s.cost * 1.3);
+                renderStore();
+                updateUI();
+            }
+        }
+
+        function buyUpgrade(key) {
+            let u = game.upgrades[key];
+            if(game.money >= u.cost) {
+                game.money -= u.cost;
+                u.level++;
+                if(key === 'marketing') game.burgerPrice += 5;
+                if(key === 'conveyor') game.sellRate += 2;
+                u.cost *= 2;
+                renderStore();
+                updateUI();
+            }
+        }
+
+        // --- RENDERIZAÇÃO ---
+        function renderStore() {
+            const staffDiv = document.getElementById('staff-list');
+            staffDiv.innerHTML = '';
+            for(let key in game.staff) {
+                let s = game.staff[key];
+                staffDiv.innerHTML += `
+                    <div class="upgrade-card">
+                        <strong>${s.icon} ${s.name}</strong> (${s.count})<br>
+                        <small>Produz: +${s.power}/s</small>
+                        <button onclick="buyStaff('${key}')" ${game.money < s.cost ? 'disabled' : ''}>Contratar: $${s.cost}</button>
+                    </div>`;
+            }
+
+            const upDiv = document.getElementById('upgrade-list');
+            upDiv.innerHTML = '';
+            for(let key in game.upgrades) {
+                let u = game.upgrades[key];
+                upDiv.innerHTML += `
+                    <div class="upgrade-card" style="border-left-color: var(--gold)">
+                        <strong>${u.icon} ${u.name}</strong><br>
+                        <small>${u.desc}</small>
+                        <button onclick="buyUpgrade('${key}')" ${game.money < u.cost ? 'disabled' : ''}>Melhorar: $${u.cost}</button>
+                    </div>`;
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('money').innerText = `$${Math.floor(game.money)}`;
+            document.getElementById('stock').innerText = game.stock;
+            document.getElementById('prod-rate').innerText = game.autoProd;
+        }
+
+        // --- LOOPS ---
+        setInterval(() => { // Produção
+            game.stock += game.autoProd;
+            updateUI();
+            renderStore(); // Atualiza botões (se pode comprar ou não)
+        }, 1000);
+
+        setInterval(() => { // Vendas
+            if(game.stock > 0) {
+                let amount = Math.min(game.stock, game.sellRate);
+                game.stock -= amount;
+                game.money += amount * game.burgerPrice;
+                updateUI();
+            }
+        }, 800);
+
+        // --- SALVAMENTO E ARQUIVOS ---
+        function saveGame() {
+            localStorage.setItem('BurgerEmpire_Save', JSON.stringify(game));
+            console.log("Auto-save realizado!");
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('BurgerEmpire_Save');
+            if(saved) game = JSON.parse(saved);
+        }
+
+        function exportData() {
+            const data = btoa(JSON.stringify(game));
+            const blob = new Blob([data], {type: 'application/octet-stream'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'burger_empire_backup.dat';
+            a.click();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    game = JSON.parse(atob(e.target.result));
+                    saveGame();
+                    location.reload();
+                } catch(err) { alert("Arquivo .dat corrompido!"); }
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        function resetGame() {
+            if(confirm("TEM CERTEZA? Todo seu império será destruído!")) {
+                localStorage.removeItem('BurgerEmpire_Save');
+                location.reload();
+            }
+        }
+
+        function createParticle(x, y, text) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.innerText = text;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+
+        // Inicializar
+        loadGame();
+        setInterval(saveGame, 60000); // Save a cada minuto
+    </script>
+</body>
+</html>
