@@ -1,0 +1,12 @@
+Estou planejando novas atualizações ao site e novos jogos
+
+- novos jogos online para jogar junto localmente, provavelmente, em p2p (Utilizar online sem precisar de um servidor dedicado, ou seja, for free)
+
+- Colocaremos mais destaques
+
+- provaveis novos jogos offline que vão vir ainda
+
+- tentarei adicionar sistema de saves
+
+
+Obrigado por ler!
